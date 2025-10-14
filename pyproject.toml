@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "rostering"
+version = "0.1.0"
+description = "Optimise colleague shift assignments based on employee holidays/preferences and business needs."
+authors = ["tom-weisner <tomweisner@hotmail.com>"]
+readme = "README.md"
+packages = [{ include = "rostering", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+numpy = "^2.3.3"
+
+[tool.poetry.group.dev.dependencies]
+nox = "^2025.5.1"
+nox-poetry = "^1.2.0"
+mypy = "^1.18.2"
+
+
+[tool.poetry.group.tests.dependencies]
+pytest = "^8.4.2"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+# Tell mypy where your code lives (src/ layout) + which folders to check
+files = ["src", "tests"]
+python_version = "3.11"
+mypy_path = ["src"]  # ensures imports like `import rostering` resolve from src/
