@@ -28,6 +28,7 @@ poetry install
 poetry config virtualenvs.in-project true
 poetry install
 source .venv/bin/activate
+poetry run pre-commit install
 
 # 4) Run tests
 pytest -q
@@ -49,7 +50,7 @@ poetry add --group test pytest hypothesis
 
 ### 🧪 Using Nox for Automation
 
-This project uses **[Nox](https://nox.thea.codes/)** (with [nox-poetry](https://nox-poetry.readthedocs.io/)) to automate formatting, linting, type checking, and testing.  
+This project uses **[Nox](https://nox.thea.codes/)** (with [nox-poetry](https://nox-poetry.readthedocs.io/)) to automate formatting, linting, type checking, and testing.
 Nox creates isolated virtual environments for each task, ensuring consistency and reproducibility.
 
 #### ⚙️ Setup
@@ -77,5 +78,3 @@ Run all sessions sequentially:
 | `lint`            | Lint and style checks              | ruff, black, isort             |
 | `typecheck_mypy`  | Static type checking               | mypy, pytest                   |
 | `tests`           | Run test suite                     | pytest                         |
-
-
