@@ -78,3 +78,4 @@ Run all sessions sequentially:
 | `typecheck_mypy`  | Static type checking               | mypy, pytest                   |
 | `tests`           | Run test suite                     | pytest                         |
 
+
