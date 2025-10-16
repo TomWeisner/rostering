@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rostering"
-version = "0.1.1"
+version = "0.1.1.post4"
 description = "Optimise colleague shift assignments based on employee holidays/preferences and business needs."
 authors = ["tom-weisner <tomweisner@hotmail.com>"]
 readme = "README.md"
