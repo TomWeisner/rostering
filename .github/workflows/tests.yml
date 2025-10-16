@@ -1,18 +1,30 @@
 name: tests
-on: [push]
+on: [push, pull_request]
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
-      - run: pip install poetry
-      - run: poetry install --with tests
-      - run: poetry run pytest
-      - name: Upload to Codecov
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install deps (incl. tests group)
+        run: poetry install --with tests
+
+      - name: Run tests & create coverage.xml
+        # produces coverage.xml in repo root because of pytest addopts
+        run: poetry run pytest
+
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}   # needed for protected branch / private repo
+          files: coverage.xml
           fail_ci_if_error: true
           verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }}

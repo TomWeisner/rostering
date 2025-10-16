@@ -50,4 +50,4 @@ python_version = "3.11"
 mypy_path = ["src"]  # ensures imports like `import rostering` resolve from src/
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=rostering --cov-report=term-missing"
+addopts = "-q --cov=rostering --cov-report=xml --cov-report=term-missing"
