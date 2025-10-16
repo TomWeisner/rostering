@@ -1,5 +1,5 @@
 name: tests
-on: [push, pull_request]
+on: [push]
 
 jobs:
   test:
@@ -25,6 +25,6 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}   # needed for protected branch / private repo
-          files: coverage.xml
+          files: ./coverage.xml
           fail_ci_if_error: true
           verbose: true
