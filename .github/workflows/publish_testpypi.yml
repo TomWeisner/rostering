@@ -2,7 +2,7 @@ name: Publish to TestPyPI
 
 on:
   push:
-    branches: [ dev_setup ]
+    branches: [ dev ]
 
 concurrency:
   group: publish-testpypi-${{ github.ref }}
