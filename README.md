@@ -5,7 +5,7 @@
 
 [🐍 PyPI](https://test.pypi.org/project/rostering/) • [💻 Repo](https://github.com/TomWeisner/rostering.git)
 
-[![codecov](https://codecov.io/github/TomWeisner/rostering/graph/badge.svg?token=76IBOK4C18)](https://codecov.io/github/TomWeisner/rostering)
+[![codecov](https://codecov.io/gh/TomWeisner/rostering/branch/dev_setup/graph/badge.svg?token=76IBOK4C18)](https://app.codecov.io/gh/TomWeisner/rostering?branch=dev_setup)
 
 ## ✨ Features
 
