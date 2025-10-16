@@ -1,5 +1,5 @@
 name: tests
-on: [push, pull_request]
+on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -11,7 +11,8 @@ jobs:
       - run: poetry install --with tests
       - run: poetry run pytest
       - name: Upload to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
           verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
