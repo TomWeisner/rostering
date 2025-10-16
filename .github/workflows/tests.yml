@@ -1,5 +1,5 @@
 name: tests
-on: [push]
+on: [push, pull_request]
 
 jobs:
   test:
@@ -17,14 +17,21 @@ jobs:
       - name: Install deps (incl. tests group)
         run: poetry install --with tests
 
+      - name: Sanity check pytest-cov installed
+        run: poetry run python -c "import pytest_cov, sys; print('pytest-cov OK')"
+
       - name: Run tests & create coverage.xml
-        # produces coverage.xml in repo root because of pytest addopts
-        run: poetry run pytest
+        run: poetry run pytest --cov=rostering --cov-report=xml --cov-report=term-missing
+
+      - name: Show coverage artifacts
+        run: |
+          ls -al
+          find . -maxdepth 3 -name "coverage.xml" -o -name ".coverage*"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}   # needed for protected branch / private repo
+          token: ${{ secrets.CODECOV_TOKEN }}   # keep for protected branch/private
           files: ./coverage.xml
           fail_ci_if_error: true
           verbose: true
