@@ -1,0 +1,55 @@
+# .pre-commit-config.yaml
+# Install hooks:  pre-commit install
+# Run on all files once:  pre-commit run --all-files
+
+repos:
+  # --- Format: Black ---
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        files: ^(src|tests)/
+
+  # --- Import sorting: isort ---
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        files: ^(src|tests)/
+
+  # --- Lint: Ruff (fast linter & fixer) ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]     # auto-fix what it can; drop if you prefer check-only
+        files: ^(src|tests)/
+
+  # --- Core hygiene hooks ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+
+  # --- Use project tools via Poetry (system language) ---
+  # Keep mypy version consistent with pyproject (you have mypy ^1.18.2).
+  - repo: local
+    hooks:
+      - id: poetry-check
+        name: poetry check (sanity)
+        entry: poetry check --no-interaction
+        language: system
+        pass_filenames: false
+        files: ^pyproject\.toml$
+
+      - id: mypy
+        name: mypy (via poetry)
+        entry: poetry run mypy --config-file pyproject.toml
+        language: system
+        types: [python]
+        # Ensure pytest is importable in mypy's env (pytest has inline types).
+        additional_dependencies: []
+        files: ^(src|tests)/
