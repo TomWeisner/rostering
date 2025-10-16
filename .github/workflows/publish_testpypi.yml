@@ -1,57 +1,93 @@
+# -----------------------------------------------------------------------------
+# Workflow: Publish to TestPyPI with auto post-release bump
+#
+# Why:
+# - Ensure every CI publish to TestPyPI has a unique version (PEP 440: .postN)
+# - Keep repo in sync by committing the bump back to the dev branch
+#
+# Notes:
+# - Normal for TestPyPI flows. For real PyPI, prefer tag-based semantic releases.
+# - Prevents infinite loops by skipping runs triggered by the bot commit.
+# - Requires repo secret: TESTPYPI_API_TOKEN
+# -----------------------------------------------------------------------------
+
 name: Publish to TestPyPI
 
 on:
   push:
-    branches: [ dev_setup ]
+    branches: [ dev ]   # Run only on pushes to dev
 
-concurrency:
-  group: publish-testpypi-${{ github.ref }}
-  cancel-in-progress: false
-
+# Do not run for bot-commits (prevents loop when we push the bump back)
 jobs:
   publish:
+    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write  # allow committing the version bump back to the repo
+
     env:
-      # Expose token to Poetry (no ~/.pypirc needed)
+      # Poetry picks this up for uploads to the "testpypi" repository
       POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.TESTPYPI_API_TOKEN }}
 
     steps:
+      # 1) Checkout
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 2) Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
+      # 3) Poetry
       - name: Install Poetry
         run: pip install poetry
 
-      - name: Install project (no dev deps needed to build)
+      # 4) Install only what's needed to build (no dev deps)
+      - name: Install project (no dev deps)
         run: poetry install --only main --no-root
 
+      # 5) Configure TestPyPI repository (legacy upload endpoint)
       - name: Configure TestPyPI repo
         run: poetry config repositories.testpypi https://test.pypi.org/legacy/
 
-      # ---- Auto-bump to a unique version so TestPyPI accepts the upload ----
-      # Strategy: turn the current version into a post release: X.Y.Z.post<run_number>
+      # 6) Show current version
       - name: Show current version
         run: poetry version -s
 
+      # 7) Bump to unique post-release: X.Y.Z.post<run_number>
       - name: Bump version for TestPyPI
         shell: bash
         run: |
+          set -euo pipefail
           BASE_VERSION="$(poetry version -s)"
-          # Strip any existing .postN and append current run number for uniqueness
           CLEAN_BASE="${BASE_VERSION%%.post*}"
           NEW_VERSION="${CLEAN_BASE}.post${GITHUB_RUN_NUMBER}"
           echo "Setting version to ${NEW_VERSION}"
           poetry version "${NEW_VERSION}"
+          echo "Effective version:"
           poetry version -s
 
+      # 8) Commit the bump back to dev (so repo matches artifact version)
+      - name: Commit version bump back to dev
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git add pyproject.toml
+            git commit -m "chore(testpypi): bump version for CI publish (.post run) [skip ci]"
+            git push origin HEAD:dev
+          else
+            echo "No changes to commit."
+          fi
+
+      # 9) Build (sdist + wheel)
       - name: Build dist
         run: poetry build
 
+      # 10) Publish to TestPyPI
       - name: Publish to TestPyPI
         run: poetry publish -r testpypi --no-interaction --skip-existing --verbose
