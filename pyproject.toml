@@ -6,6 +6,24 @@ authors = ["tom-weisner <tomweisner@hotmail.com>"]
 readme = "README.md"
 packages = [{ include = "rostering", from = "src" }]
 
+license = "MIT"
+homepage = "https://github.com/TomWeisner/rostering.git"
+documentation = "https://github.com/TomWeisner/rostering#readme"
+keywords = ["rostering", "scheduling", "optimisation", "penalties"]
+
+include = [
+  "README.md",
+  "LICENSE",
+]
+# Keep junk out of the wheel/sdist
+exclude = [
+  "tests/**",
+  ".github/**",
+  "noxfile.py",
+  ".pre-commit-config.yaml"
+]
+
+
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
 numpy = "^2.3.3"
@@ -15,6 +33,7 @@ nox = "^2025.5.1"
 nox-poetry = "^1.2.0"
 mypy = "^1.18.2"
 pre-commit = "^4.3.0"
+pytest-cov = "^7.0.0"
 
 
 [tool.poetry.group.tests.dependencies]
@@ -29,3 +48,6 @@ build-backend = "poetry.core.masonry.api"
 files = ["src", "tests"]
 python_version = "3.11"
 mypy_path = ["src"]  # ensures imports like `import rostering` resolve from src/
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=rostering --cov-report=term-missing"

@@ -3,11 +3,11 @@
 > Optimise colleague shift assignments based on employee holidays/preferences and business needs.
 > Hard constraints are **enforced**; undesirable combinations incur **penalties** that the optimizer **minimises**.
 
-[📘 Docs](https://example.com/docs) • [🐍 PyPI](https://pypi.org/project/shift-optimizer-example/) • [💻 Repo](https://github.com/example/shift-optimizer)
+[🐍 PyPI](https://test.pypi.org/project/rostering/) • [💻 Repo](https://github.com/TomWeisner/rostering.git)
 
 ## ✨ Features
 
-- Hard constraints (e.g., maximum consecutive nights, legal time limits, required coverage)
+- Hard constraints (e.g. maximum consecutive nights, legal time limits, required coverage)
 - Soft constraints with penalties (e.g., avoid split shifts & undesirably long shifts, preference mismatches)
 - Fairness-aware objective with tunable weights
 - Reproducible runs and deterministic seeds
@@ -50,7 +50,7 @@ poetry add --group test pytest hypothesis
 
 ### 🧪 Using Nox for Automation
 
-This project uses **[Nox](https://nox.thea.codes/)** (with [nox-poetry](https://nox-poetry.readthedocs.io/)) to automate formatting, linting, type checking, and testing.
+> This project uses **[Nox](https://nox.thea.codes/)** (with [nox-poetry](https://nox-poetry.readthedocs.io/)) to automate formatting, linting, type checking, and testing.
 Nox creates isolated virtual environments for each task, ensuring consistency and reproducibility.
 
 #### ⚙️ Setup
@@ -78,3 +78,30 @@ Run all sessions sequentially:
 | `lint`            | Lint and style checks              | ruff, black, isort             |
 | `typecheck_mypy`  | Static type checking               | mypy, pytest                   |
 | `tests`           | Run test suite                     | pytest                         |
+
+### 💅 Pre-commit Hooks
+
+> This project uses **[pre-commit](https://pre-commit.com/)** to automatically check and format code before each commit.
+It helps maintain consistent style, catch simple mistakes early, and keep the main branch clean.
+
+#### ⚙️ Setup
+
+Install **pre-commit** (it’s already listed in the dev dependencies):
+
+```bash
+poetry install --with dev
+poetry run pre-commit install
+```
+
+#### Hooks Oviewview
+
+| Hook | Description |
+|------|--------------|
+| **Black** | Automatically formats Python code to follow [PEP 8](https://peps.python.org/pep-0008/) style guidelines. |
+| **isort** | Sorts and groups imports into consistent sections (standard, third-party, local). |
+| **Ruff** | Fast Python linter that enforces code quality and catches common issues (replaces Flake8, pylint, etc.). |
+| **Mypy** | Performs static type checking based on the configuration in `pyproject.toml`. |
+| **check-yaml** | Validates YAML files for syntax correctness. |
+| **end-of-file-fixer** | Ensures files end with a single newline. |
+| **trailing-whitespace** | Removes stray trailing spaces. |
+| **check-merge-conflict** | Detects unresolved merge conflict markers before commit. |
