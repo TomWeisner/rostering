@@ -5,6 +5,8 @@
 
 [🐍 PyPI](https://test.pypi.org/project/rostering/) • [💻 Repo](https://github.com/TomWeisner/rostering.git)
 
+[![codecov](https://codecov.io/github/TomWeisner/rostering/graph/badge.svg?token=76IBOK4C18)](https://codecov.io/github/TomWeisner/rostering)
+
 ## ✨ Features
 
 - Hard constraints (e.g. maximum consecutive nights, legal time limits, required coverage)
