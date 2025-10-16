@@ -1,109 +1,154 @@
-# 🕒 Shift Optimiser (rostering)
+# 🕒 Shift Optimiser (`rostering`)
 
 > Optimise colleague shift assignments based on employee holidays/preferences and business needs.
-> Hard constraints are **enforced**; undesirable combinations incur **penalties** that the optimizer **minimises**.
+> Hard constraints are **enforced**, while undesirable combinations incur **penalties** that the optimiser **minimises**.
 
-[🐍 PyPI](https://test.pypi.org/project/rostering/) • [💻 Repo](https://github.com/TomWeisner/rostering.git)
+[🐍 TestPyPI](https://test.pypi.org/project/rostering/) • [💻 GitHub Repo](https://github.com/TomWeisner/rostering)
 
 [![codecov](https://codecov.io/gh/TomWeisner/rostering/branch/dev_setup/graph/badge.svg?token=76IBOK4C18)](https://app.codecov.io/gh/TomWeisner/rostering?branch=dev_setup)
+[![CI](https://github.com/TomWeisner/rostering/actions/workflows/tests.yml/badge.svg)](https://github.com/TomWeisner/rostering/actions/workflows/tests.yml)
+[![TestPyPI version](https://img.shields.io/pypi/v/rostering?pypiBaseUrl=https%3A%2F%2Ftest.pypi.org\&label=TestPyPI\&color=orange)](https://test.pypi.org/project/rostering/)
+[![Python versions](https://img.shields.io/pypi/pyversions/rostering?pypiBaseUrl=https%3A%2F%2Ftest.pypi.org)](https://test.pypi.org/project/rostering/)
+[![License](https://img.shields.io/github/license/TomWeisner/rostering.svg)](LICENSE)
+
+---
 
 ## ✨ Features
 
-- Hard constraints (e.g. maximum consecutive nights, legal time limits, required coverage)
-- Soft constraints with penalties (e.g., avoid split shifts & undesirably long shifts, preference mismatches)
-- Fairness-aware objective with tunable weights
-- Reproducible runs and deterministic seeds
-- Poetry for dependencies/packaging, Nox for formatting/linting/test tasks, pre-commit hooks
+* **Hard constraints:** e.g. maximum consecutive nights, legal time limits, required coverage
+* **Soft constraints with penalties:** e.g. avoid split shifts, overly long shifts, or preference mismatches
+* **Fairness-aware objective:** tunable weights for equitable scheduling
+* **Reproducible runs:** deterministic seeds for consistent results
+* **Modern tooling:** Poetry for dependencies, Nox for automation, pre-commit hooks for quality
 
-## 🚀 Quickstart
+---
+
+## 🧩 Installation
+
+### Option 1 — via `pip`
 
 ```bash
-# 1) Get the code
-git clone git clone https://github.com/TomWeisner/rostering.git
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple rostering
+```
+
+### Option 2 — via `Poetry`
+
+```bash
+# One-time setup to add TestPyPI
+poetry source add --priority explicit testpypi https://test.pypi.org/simple/
+
+# Add the package
+poetry add --source testpypi rostering
+```
+
+---
+
+## 🤝 Contributing
+
+### 1️⃣ Clone & Set Up
+
+```bash
+git clone https://github.com/TomWeisner/rostering.git
 cd rostering
 code .
+```
 
-# 2) Install Poetry-managed dep
+### 2️⃣ Install dependencies
+
+```bash
 poetry install
-
-# 3) Activate venv
 poetry config virtualenvs.in-project true
-poetry install
 source .venv/bin/activate
 poetry run pre-commit install
+```
 
-# 4) Run tests
+### 3️⃣ Run tests
+
+```bash
 pytest -q
 ```
 
-## Making changes
+---
 
-### Adding new deps
+## 🧪 Development
+
+### Adding dependencies
+
 ```bash
-# 1) # Add a runtime dependency
+# Runtime dependencies
 poetry add numpy
 
-# Add dev-only tools
+# Dev tools
 poetry add --group dev black
 
-# Add test-only libs
+# Test-only libraries
 poetry add --group test pytest hypothesis
 ```
 
-### 🧪 Using Nox for Automation
+---
 
-> This project uses **[Nox](https://nox.thea.codes/)** (with [nox-poetry](https://nox-poetry.readthedocs.io/)) to automate formatting, linting, type checking, and testing.
-Nox creates isolated virtual environments for each task, ensuring consistency and reproducibility.
+## ⚙️ Nox Automation
 
-#### ⚙️ Setup
+This project uses **[Nox](https://nox.thea.codes/)** (with [nox-poetry](https://nox-poetry.readthedocs.io/)) to automate linting, formatting, type checks, and testing in isolated virtual environments.
 
-Install `nox` and `nox-poetry` via:
+### Setup
+
 ```bash
 poetry add --group dev nox nox-poetry
 ```
 
-#### 🚀 Running Nox Sessions
+### Run sessions
 
-To see all available sessions:
-`nox -L`
+```bash
+nox -L            # list sessions
+nox -s lint       # run a specific session
+nox               # run all sessions
+```
 
-Run a specific session:
-`nox -s <session>` e.g. `nox -s lint`
+| Session          | Purpose              | Tools Used         |
+| ---------------- | -------------------- | ------------------ |
+| `format`         | Auto-format code     | black, isort       |
+| `lint`           | Lint/style checks    | ruff, black, isort |
+| `typecheck_mypy` | Static type checking | mypy               |
+| `tests`          | Run unit tests       | pytest             |
 
-Run all sessions sequentially:
-`nox`
+---
 
-#### Session Overview
-| Session           | Purpose                            | Tools Used                     |
-|-------------------|------------------------------------|--------------------------------|
-| `format`          | Auto-format code                   | black, isort                   |
-| `lint`            | Lint and style checks              | ruff, black, isort             |
-| `typecheck_mypy`  | Static type checking               | mypy, pytest                   |
-| `tests`           | Run test suite                     | pytest                         |
+## 💅 Pre-commit Hooks
 
-### 💅 Pre-commit Hooks
+**[pre-commit](https://pre-commit.com/)** ensures consistent formatting and catches common issues before commits.
 
-> This project uses **[pre-commit](https://pre-commit.com/)** to automatically check and format code before each commit.
-It helps maintain consistent style, catch simple mistakes early, and keep the main branch clean.
-
-#### ⚙️ Setup
-
-Install **pre-commit** (it’s already listed in the dev dependencies):
+### Setup
 
 ```bash
 poetry install --with dev
 poetry run pre-commit install
+
+# Run manually
+poetry run pre-commit run --all-files
 ```
 
-#### Hooks Oviewview
+### Hooks Overview
 
-| Hook | Description |
-|------|--------------|
-| **Black** | Automatically formats Python code to follow [PEP 8](https://peps.python.org/pep-0008/) style guidelines. |
-| **isort** | Sorts and groups imports into consistent sections (standard, third-party, local). |
-| **Ruff** | Fast Python linter that enforces code quality and catches common issues (replaces Flake8, pylint, etc.). |
-| **Mypy** | Performs static type checking based on the configuration in `pyproject.toml`. |
-| **check-yaml** | Validates YAML files for syntax correctness. |
-| **end-of-file-fixer** | Ensures files end with a single newline. |
-| **trailing-whitespace** | Removes stray trailing spaces. |
-| **check-merge-conflict** | Detects unresolved merge conflict markers before commit. |
+| Hook                     | Description                          |
+| ------------------------ | ------------------------------------ |
+| **Black**                | Formats code to PEP 8.               |
+| **isort**                | Sorts imports into logical groups.   |
+| **Ruff**                 | Fast linter replacing Flake8/pylint. |
+| **Mypy**                 | Static type checking.                |
+| **check-yaml**           | Validates YAML syntax.               |
+| **end-of-file-fixer**    | Ensures a trailing newline.          |
+| **trailing-whitespace**  | Removes stray spaces.                |
+| **check-merge-conflict** | Detects unresolved merge conflicts.  |
+
+---
+
+## 🚀 Publishing to TestPyPI
+
+1. Raise a PR into `dev`
+2. Wait for GitHub Actions to pass — this will upload to TestPyPI
+3. Merge into `dev`
+4. Raise a PR into `master`
+5. Wait for CI/CD to complete
+
+---

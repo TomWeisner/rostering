@@ -1,37 +1,57 @@
+# -----------------------------------------------------------------------------
+# GitHub Actions: test & coverage workflow for the rostering project
+#
+# What it does:
+# - Runs pytest on every push
+# - Generates coverage.xml using pytest-cov
+# - Uploads coverage to Codecov (keeps README badge fresh, adds PR checks)
+#
+# -----------------------------------------------------------------------------
+
 name: tests
-on: [push]
+on: [push]  # or: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
+      # 1) Check out the repo at the ref that triggered the workflow
       - uses: actions/checkout@v4
 
+      # 2) Install the requested Python version and enable pip cache
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"  # uncomment to speed up installs
 
+      # 3) Install Poetry (project uses Poetry for dependency management)
       - name: Install Poetry
         run: pip install poetry
 
+      # 4) Install project dependencies (including the "tests" group)
       - name: Install deps (incl. tests group)
         run: poetry install --with tests
 
+      # 5) Sanity check: ensure pytest-cov is importable before running tests
       - name: Sanity check pytest-cov installed
-        run: poetry run python -c "import pytest_cov, sys; print('pytest-cov OK')"
+        run: poetry run python -c "import pytest_cov; print('pytest-cov OK')"
 
+      # 6) Run tests and generate coverage.xml for Codecov
       - name: Run tests & create coverage.xml
         run: poetry run pytest --cov=rostering --cov-report=xml --cov-report=term-missing
 
+      # 7) Show where coverage artifacts landed (useful when debugging CI)
       - name: Show coverage artifacts
         run: |
           ls -al
           find . -maxdepth 3 -name "coverage.xml" -o -name ".coverage*"
 
+      # 8) Upload the coverage.xml to Codecov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}   # keep for protected branch/private
+          token: ${{ secrets.CODECOV_TOKEN }}   # for private/protected; can omit on public
           files: ./coverage.xml
           fail_ci_if_error: true
           verbose: true
