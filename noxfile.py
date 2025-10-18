@@ -7,12 +7,13 @@ PY_VERSIONS = ["3.11"]  # add more if you test multiple versions
 def format(session: Session) -> None:
     """Auto-format code."""
     session.install("black", "isort")
-    session.run("black", "src", "tests")
     session.run("isort", "src", "tests")
+    session.run("black", "src", "tests")
 
 @session(python=PY_VERSIONS)
 def typecheck_mypy(session):
     session.install("mypy", "pytest")
+    session.install("pandas-stubs~=2.2")  # match your pandas version
     session.install(".")
     # If stubs are needed, install them too, e.g.:
     # session.install("types-requests", "types-python-dateutil")
@@ -23,8 +24,8 @@ def lint(session: Session) -> None:
     """Run linters/formatters managed by Poetry dev deps."""
     session.install("ruff", "black", "isort")
     session.run("ruff", "check", "src", "tests")
-    session.run("black", "--check", "src", "tests")
     session.run("isort", "--check-only", "src", "tests")
+    session.run("black", "--check", "src", "tests")
 
 @session(python=PY_VERSIONS)
 def tests(session: Session) -> None:

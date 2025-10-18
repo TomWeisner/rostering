@@ -146,9 +146,4 @@ poetry run pre-commit run --all-files
 ## 🚀 Publishing to TestPyPI
 
 1. Raise a PR into `dev`
-2. Wait for GitHub Actions to pass — this will upload to TestPyPI
-3. Merge into `dev`
-4. Raise a PR into `master`
-5. Wait for CI/CD to complete
-
----
+2. Wait for GitHub Actions to pass — one action automatically uploads to TestPyPI a version of the package with an incremented version number
