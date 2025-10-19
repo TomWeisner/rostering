@@ -5,7 +5,7 @@
 
 [🐍 TestPyPI](https://test.pypi.org/project/rostering/) • [💻 GitHub Repo](https://github.com/TomWeisner/rostering)
 
-[![codecov](https://codecov.io/gh/TomWeisner/rostering/branch/dev_setup/graph/badge.svg?token=76IBOK4C18)](https://app.codecov.io/gh/TomWeisner/rostering?branch=dev_setup)
+[![codecov](https://codecov.io/gh/TomWeisner/rostering/branch/master/graph/badge.svg?token=76IBOK4C18)](https://codecov.io/gh/TomWeisner/rostering)
 [![CI](https://github.com/TomWeisner/rostering/actions/workflows/tests.yml/badge.svg)](https://github.com/TomWeisner/rostering/actions/workflows/tests.yml)
 [![TestPyPI version](https://img.shields.io/pypi/v/rostering?pypiBaseUrl=https%3A%2F%2Ftest.pypi.org\&label=TestPyPI\&color=orange)](https://test.pypi.org/project/rostering/)
 [![Python versions](https://img.shields.io/pypi/pyversions/rostering?pypiBaseUrl=https%3A%2F%2Ftest.pypi.org)](https://test.pypi.org/project/rostering/)
