@@ -70,24 +70,10 @@ jobs:
           echo "Effective version:"
           poetry version -s
 
-      # 8) Commit the bump back to dev (so repo matches artifact version)
-      - name: Commit version bump back to dev
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet; then
-            git add pyproject.toml
-            git commit -m "chore(testpypi): bump version for CI publish (.post run) [skip ci]"
-            git push origin HEAD:dev
-          else
-            echo "No changes to commit."
-          fi
-
-      # 9) Build (sdist + wheel)
+      # 8) Build (sdist + wheel)
       - name: Build dist
         run: poetry build
 
-      # 10) Publish to TestPyPI
+      # 9) Publish to TestPyPI
       - name: Publish to TestPyPI
         run: poetry publish -r testpypi --no-interaction --skip-existing --verbose
