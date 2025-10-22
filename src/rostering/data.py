@@ -3,6 +3,7 @@ from datetime import timedelta
 
 # Your staff generator
 from rostering.generate.staff import (
+    Staff,
     StaffGenConfig,
     assign_time_off,
     build_allowed_matrix,
@@ -12,10 +13,9 @@ from rostering.generate.staff import (
 
 @dataclass
 class InputData:
-    staff: list
+    staff: list[Staff]
     allowed: list[list[bool]]  # shape: (N, 24)
     is_weekend: list[bool]  # length DAYS
-    public_holidays: set  # day-index set
 
 
 def build_input(cfg, DAYS: int, N: int, seed: int = 7) -> InputData:
@@ -49,5 +49,4 @@ def build_input(cfg, DAYS: int, N: int, seed: int = 7) -> InputData:
         staff=staff,
         allowed=allowed,
         is_weekend=is_weekend,
-        public_holidays=set(),  # use cfg.PUBLIC_HOLIDAYS in model construction
     )

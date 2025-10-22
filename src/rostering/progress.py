@@ -11,7 +11,17 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
         self.last_time = -1.0
         self.sols = 0
 
+        self.has_performed_initial_print = False
+
     def OnSolutionCallback(self):
+        if not self.has_performed_initial_print:
+            print_msg = (
+                "\nbest: objective value (sum of penalties) of best solution found so far\n"
+                "optimal: estimate of lowest possible objective value\n"
+                "gap: (optimal-best)/best\n\n"
+            )
+            print(print_msg)
+            self.has_performed_initial_print = True
         self.sols += 1
         now = self.WallTime()
         if self.last_time < 0 or (now - self.last_time) >= self.log_every:
@@ -25,7 +35,7 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
                 else ""
             )
             print(
-                f"[{now:6.1f}s] sols={self.sols} | best={best:.0f} | bound={bound:.0f} | gap={gap:.1f}% | {pct}",
+                f"[{now:6.1f}s] sols={self.sols} | best={best:,.0f} | optimal={bound:,.0f} | gap={gap:.1f}% | {pct} of time limit",
                 flush=True,
             )
             self.last_time = now

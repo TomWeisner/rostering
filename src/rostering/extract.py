@@ -10,6 +10,26 @@ from ortools.sat.python import cp_model
 from rostering.build import BuildContext
 
 
+def _has_skill(staff_obj, name: str) -> bool:
+    """
+    Robustly check whether a Staff has a given skill.
+    Supports Staff.skills as set[str] or dict[str, bool], with a fallback
+    to legacy boolean attributes (e.g., skillA) if present.
+    """
+    if hasattr(staff_obj, "skills"):
+        sk = getattr(staff_obj, "skills")
+        # dict[str, bool]
+        if isinstance(sk, dict):
+            return bool(sk.get(name, False))
+        # set / list / other iterables
+        try:
+            return name in sk
+        except TypeError:
+            pass
+    # legacy fallback (e.g., skillA / skillB)
+    return bool(getattr(staff_obj, f"skill{name}", getattr(staff_obj, name, False)))
+
+
 def extract_hourly(ctx: BuildContext, solver: cp_model.CpSolver) -> pd.DataFrame:
     """Return the hour-level schedule dataframe."""
     C = ctx.cfg
@@ -29,8 +49,9 @@ def extract_hourly(ctx: BuildContext, solver: cp_model.CpSolver) -> pd.DataFrame
                             "employee_id": e,
                             "name": s.name,
                             "band": s.band,
-                            "skillA": bool(s.skillA),
-                            "skillB": bool(s.skillB),
+                            # derive booleans from unified skills
+                            "skillA": _has_skill(s, "A"),
+                            "skillB": _has_skill(s, "B"),
                         }
                     )
     if not rows:
@@ -70,13 +91,6 @@ def extract_shifts(ctx: BuildContext, solver: cp_model.CpSolver) -> pd.DataFrame
                 else:
                     end_dt = start_dt + timedelta(days=1)
                     end_h = end_total - 24
-                cur_realized = sum(
-                    int(solver.Value(v)) for v in ctx.w_cur_list.get((e, d), [])
-                )
-                spill_realized = sum(
-                    int(solver.Value(v)) for v in ctx.spill_from_day.get((e, d), [])
-                )
-                realized = cur_realized + spill_realized
                 shift_rows.append(
                     {
                         "employee_id": e,
@@ -86,7 +100,6 @@ def extract_shifts(ctx: BuildContext, solver: cp_model.CpSolver) -> pd.DataFrame
                         "end_date": end_dt.date().isoformat(),
                         "end_hour": end_h,
                         "model_length_h": Lh,
-                        "realized_h": realized,
                         "day_index": d,
                     }
                 )
@@ -100,15 +113,15 @@ def extract_shifts(ctx: BuildContext, solver: cp_model.CpSolver) -> pd.DataFrame
                 "end_date",
                 "end_hour",
                 "model_length_h",
-                "realized_h",
                 "day_index",
             ]
         )
-    return (
+    df = (
         pd.DataFrame(shift_rows)
         .sort_values(["start_date", "start_hour", "employee_id"])
         .reset_index(drop=True)
     )
+    return df
 
 
 def extract_employee_totals(
@@ -129,8 +142,9 @@ def extract_employee_totals(
                 "id": e,
                 "name": s.name,
                 "band": s.band,
-                "A": int(s.skillA),
-                "B": int(s.skillB),
+                # derive skill flags from unified skills
+                "A": int(_has_skill(s, "A")),
+                "B": int(_has_skill(s, "B")),
                 "night": int(getattr(s, "is_night_worker", 0)),
                 "hours": int(hours),
             }

@@ -44,6 +44,7 @@ class RosterModel:
         if self._ctx is None:
             raise RuntimeError("Call build() before solve().")
 
+        print("Solving...")
         solver, status_name, unsat_groups = solve_model(
             self._ctx, progress_cb=progress_cb
         )
@@ -88,3 +89,8 @@ class RosterModel:
             avg_run=avg_run,
             unsat_core_groups={},
         )
+
+    def get_report_descriptors(self) -> list[dict]:
+        if self._ctx is None:
+            raise RuntimeError("Call build() before get_report_descriptors().")
+        return self._ctx.report_descriptors()

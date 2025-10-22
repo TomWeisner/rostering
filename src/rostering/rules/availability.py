@@ -9,7 +9,7 @@ class AvailabilityRule(Rule):
         C, D, m = self.model.cfg, self.model.data, self.model.m
         for e in range(C.N):
             s = D.staff[e]
-            forb_days = set(s.holidays) | set(C.PUBLIC_HOLIDAYS)
+            forb_days = set(s.holidays)
             mask = D.allowed[e]
             for d in range(C.DAYS):
                 for h in range(C.HOURS):

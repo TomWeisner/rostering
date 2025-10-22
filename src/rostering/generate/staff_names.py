@@ -1010,6 +1010,3 @@ FIRST_NAMES = [
     "Zoe",
     "Zoey",
 ]
-
-# confirm
-print(len(FIRST_NAMES), "names loaded")

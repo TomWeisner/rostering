@@ -27,7 +27,7 @@ class IntervalLinkRule(Rule):
 
         for e in range(C.N):
             mask = D.allowed[e]
-            forb_days = set(D.staff[e].holidays) | set(C.PUBLIC_HOLIDAYS)
+            forb_days = set(D.staff[e].holidays)
             for d in range(C.DAYS):
                 for h in range(C.HOURS):
                     # S<=h and h<S+L

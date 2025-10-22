@@ -1,54 +1,79 @@
 # rostering/precheck.py
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Set, Tuple
+
+import numpy as np
 
 from rostering.config import Config
 from rostering.data import InputData
 
 
+def _skills_in_min(C: Config) -> Set[str]:
+    out: Set[str] = set()
+    skill_min = getattr(C, "SKILL_MIN", None)
+    if skill_min is None:
+        return out
+    for row in skill_min:
+        for slot in row:
+            out.update(slot.keys())
+    return out
+
+
 def precheck_availability(
     cfg: Config, data: InputData
-) -> Tuple[int, int, bool, tuple[list, list, list, list]]:
+) -> Tuple[int, int, bool, dict[str, list[Tuple[int, int, int]]]]:
     """
-    Quick necessary-condition check before building the CP model.
-    Counts per-hour availability upper bounds ignoring contiguity/rest.
+    cap: N * MAX_SHIFT_H
+    dem: sum over (d,h) of max(SKILL_MIN[d][h].values(), default=0)
+    buckets[skill]: list of (d,h,available_with_skill) where availability < required
     """
-    cap = cfg.N * cfg.MAX_SHIFT_H
-    dem = cfg.COVER * cfg.HOURS
-    ok_cap = cap >= dem
+    cap = int(cfg.N * cfg.MAX_SHIFT_H)
 
-    few_cover: list[tuple] = []
-    few_sen: list[tuple] = []
-    few_A: list[tuple] = []
-    few_B: list[tuple] = []
+    skills_required = sorted(_skills_in_min(cfg))
+    buckets: dict[str, list[Tuple[int, int, int]]] = {s: [] for s in skills_required}
 
+    # Allowed mask safeguard
+    allowed = getattr(data, "allowed", None)
+    if allowed is None or not np.any(allowed):
+        allowed_mask = np.ones((cfg.N, cfg.HOURS), dtype=bool)
+    else:
+        allowed_mask = np.asarray(allowed, dtype=bool)
+        assert allowed_mask.shape == (cfg.N, cfg.HOURS)
+
+    # Narrow SKILL_MIN once for safe indexing
+    skill_min = getattr(cfg, "SKILL_MIN", None)
+
+    dem = 0
     for d in range(cfg.DAYS):
         for h in range(cfg.HOURS):
-            avail = senior = a = b = 0
-            for e in range(cfg.N):
-                s = data.staff[e]
-                if (
-                    (d in s.holidays)
-                    or (d in cfg.PUBLIC_HOLIDAYS)
-                    or (not data.allowed[e][h])
-                ):
-                    continue
-                avail += 1
-                if s.band >= 2:
-                    senior += 1
-                if s.skillA:
-                    a += 1
-                if s.skillB:
-                    b += 1
+            if skill_min is not None:
+                slot_min: dict[str, int] = dict(skill_min[d][h])
+            else:
+                slot_min = {}
 
-            if avail < cfg.COVER:
-                few_cover.append((d, h, avail))
-            if senior < cfg.MIN_SENIOR:
-                few_sen.append((d, h, senior))
-            if a < cfg.MIN_SKILL_A:
-                few_A.append((d, h, a))
-            if b < cfg.MIN_SKILL_B:
-                few_B.append((d, h, b))
+            # skill-agnostic lower bound for headcount
+            dem += int(max(slot_min.values())) if slot_min else 0
 
-    return cap, dem, ok_cap, (few_cover, few_sen, few_A, few_B)
+            # availability per skill = number of available staff whose skills contain that label
+            if skills_required:
+                avail_by_skill = {s: 0 for s in skills_required}
+                for e in range(cfg.N):
+                    st = data.staff[e]
+                    if (d in getattr(st, "holidays", set())) or (
+                        not allowed_mask[e, h]
+                    ):
+                        continue
+                    for skill in slot_min.keys():
+                        # Staff.skills is list[str]
+                        if skill in getattr(st, "skills", ()):
+                            avail_by_skill[skill] += 1
+
+                # record shortfalls
+                for skill, kmin in slot_min.items():
+                    have = avail_by_skill.get(skill, 0)
+                    if have < int(kmin):
+                        buckets[skill].append((d, h, have))
+
+    ok_cap = cap >= dem
+    return cap, dem, ok_cap, buckets

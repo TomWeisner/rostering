@@ -68,7 +68,7 @@ def test_progress_callback_is_called(solver, callback, mock_print):
     # Example expected fields: "[  0.1s] sols=... | best=... | bound=..."
     assert "sols=" in line
     assert "best=" in line
-    assert "bound=" in line
+    assert "optimal=" in line
     assert "gap=" in line
     # starts with bracketed seconds
     assert re.match(r"^\[\s*\d+(\.\d+)?s\]\s", line)

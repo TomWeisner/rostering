@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Tuple
 
 import numpy as np
+import pandas as pd
 
 # If you store a large list of first names in another module:
 from rostering.generate.staff_names import FIRST_NAMES
@@ -90,25 +91,32 @@ class Staff:
     id: int
     name: str
     band: int
-    skillA: bool
-    skillB: bool
+    skills: list[str]
     is_night_worker: bool
     consec_cap: Optional[int]
     holidays: set[int] = field(default_factory=set)
     pref_off: set[int] = field(default_factory=set)
 
     def __repr__(self) -> str:
-        flags = []
-        if self.skillA:
-            flags.append("A")
-        if self.skillB:
-            flags.append("B")
         cap = f"cap={self.consec_cap}" if self.consec_cap is not None else "cap=∞"
         return (
             f"Staff(id={self.id}, name='{self.name}', band={self.band}, "
-            f"skills={''.join(flags) or '-'}, night={self.is_night_worker}, {cap}, "
+            f"skills={self.skills}, night={self.is_night_worker}, {cap}, "
             f"hol={sorted(self.holidays)}, pref={sorted(self.pref_off)})"
         )
+
+    def __post_init__(self) -> None:
+        # Ensure "ANY" is present exactly once.
+        if "ANY" not in self.skills:
+            self.skills.append("ANY")
+        # De-duplicate while preserving order (small lists, so simple approach is fine)
+        seen = set()
+        dedup = []
+        for s in self.skills:
+            if s not in seen:
+                seen.add(s)
+                dedup.append(s)
+        self.skills = dedup
 
 
 # ----------------------------
@@ -127,7 +135,6 @@ def _deterministic_counts(n: int, probs: np.ndarray) -> np.ndarray:
     shortfall = n - floors.sum()
     if shortfall > 0:
         remainders = expected - floors
-        # pick the 'shortfall' largest remainders to bump up
         bump_idx = np.argsort(remainders)[::-1][:shortfall]
         floors[bump_idx] += 1
     return floors
@@ -166,13 +173,21 @@ def create_staff(cfg: StaffGenConfig) -> list[Staff]:
         hasB = bool(g.random() < pB)
         consec_cap = int(cap_draws[i]) if capped_flags[i] else None
 
+        skills: list[str] = []
+        if hasA:
+            skills.append("A")
+        if hasB:
+            skills.append("B")
+        # Senior: anyone band >= 2
+        if b >= 2:
+            skills.append("SENIOR")
+
         staff.append(
             Staff(
                 id=i,
                 name=str(FIRST_NAMES[i]),
                 band=b,
-                skillA=hasA,
-                skillB=hasB,
+                skills=skills,
                 is_night_worker=bool(night_flags[i]),
                 consec_cap=consec_cap,
             )
@@ -189,12 +204,6 @@ def assign_time_off(
 ) -> None:
     """
     Randomly assign holidays and preferred days off to a staff roster.
-
-    :param staff: list of Staff objects to assign time off to.
-    :param days: Number of days to consider for time off.
-    :param holiday_rate: Probability of a day being a holiday (0 <= holiday_rate <= 1).
-    :param pref_off_rate: Probability of a day being a preferred day off (0 <= pref_off_rate <= 1).
-    :param seed: Optional seed for random number generator. Defaults to 7.
     """
     if days <= 0:
         raise ValueError("days must be > 0")
@@ -218,9 +227,7 @@ def allowed_hours_for_staff(
     day_into_night_slack: int = 1,
 ) -> list[bool]:
     """
-    Build a 24-length boolean mask of allowed hours for a staff member, honoring rule 16:
-    - Night workers: nights are 18:00–06:00; they may extend into day by `night_into_day_slack` hours.
-    - Day workers: days are 06:00–18:00; they may extend into night by `day_into_night_slack` hours.
+    Build a 24-length boolean mask of allowed hours for a staff member, honoring rule 16.
     """
     if not (0 <= night_start <= 23) or not (0 <= night_end <= 23):
         raise ValueError("night_start/night_end must be within [0..23].")
@@ -230,15 +237,14 @@ def allowed_hours_for_staff(
         """Mark [start, end_excl) modulo 24 as allowed."""
         h = start
         while True:
-            allow[h] = True
-            h = (h + 1) % 24
-            if h == end_excl % 24:
+            allow[h % 24] = True
+            h += 1
+            if h % 24 == end_excl % 24:
                 break
 
     # canonical day window
     day_start, day_end = 6, 18  # 06:00–18:00
-    # canonical night window wraps: 18:00–24:00 and 00:00–06:00
-    n_start, n_end = night_start, night_end
+    n_start, n_end = night_start, night_end  # night wraps
 
     if s.is_night_worker:
         # Core night
@@ -253,7 +259,6 @@ def allowed_hours_for_staff(
         if day_into_night_slack > 0:
             mark_range(day_end, day_end + day_into_night_slack)
 
-    # normalize indexes >=24 back into 0..23 (mark_range already wraps modulo 24)
     return allow
 
 
@@ -280,8 +285,9 @@ def build_allowed_matrix(staff: list[Staff], cfg: StaffGenConfig) -> np.ndarray:
 def staff_summary(staff: list[Staff]) -> dict:
     n = len(staff)
     bands: dict[int, float] = {}
-    A = sum(s.skillA for s in staff)
-    B = sum(s.skillB for s in staff)
+    A = sum(1 if "A" in s.skills else 0 for s in staff)
+    B = sum(1 if "B" in s.skills else 0 for s in staff)
+    SENIOR = sum(1 if "SENIOR" in s.skills else 0 for s in staff)
     night = sum(s.is_night_worker for s in staff)
     capped = sum(1 for s in staff if s.consec_cap is not None)
     for s in staff:
@@ -291,14 +297,13 @@ def staff_summary(staff: list[Staff]) -> dict:
         "bands": bands,
         "skillA_pct": A / n if n else 0.0,
         "skillB_pct": B / n if n else 0.0,
+        "senior_pct": SENIOR / n if n else 0.0,
         "night_pct": night / n if n else 0.0,
         "capped_pct": capped / n if n else 0.0,
     }
 
 
 def staff_to_dataframe(staff: list[Staff]) -> pd.DataFrame:
-    import pandas as pd
-
     rows = []
     for s in staff:
         rows.append(
@@ -306,65 +311,14 @@ def staff_to_dataframe(staff: list[Staff]) -> pd.DataFrame:
                 "id": s.id,
                 "name": s.name,
                 "band": s.band,
-                "skillA": bool(s.skillA),
-                "skillB": bool(s.skillB),
+                "skillA": "A" in s.skills,
+                "skillB": "B" in s.skills,
+                "senior": "SENIOR" in s.skills,
                 "is_night_worker": bool(s.is_night_worker),
                 "consec_cap": s.consec_cap if s.consec_cap is not None else np.nan,
                 "holidays": sorted(s.holidays),
                 "pref_off": sorted(s.pref_off),
+                "skills": s.skills[:],  # for debugging/inspection
             }
         )
     return pd.DataFrame(rows)
-
-
-# ----------------------------
-# Demo / CLI
-# ----------------------------
-if __name__ == "__main__":
-    # Example usage
-    DAYS = 7
-    cfg = StaffGenConfig(
-        n=100,
-        seed=7,
-        holiday_rate=0.10,
-        pref_off_rate=0.05,
-        night_into_day_slack=2,
-        day_into_night_slack=1,
-    )
-    cfg.validate()
-
-    # Create staff
-    staff = create_staff(cfg)
-
-    # Assign time off for this horizon
-    assign_time_off(
-        staff,
-        days=DAYS,
-        holiday_rate=cfg.holiday_rate,
-        pref_off_rate=cfg.pref_off_rate,
-        seed=cfg.seed,
-    )
-
-    # Build availability masks
-    allowed = build_allowed_matrix(staff, cfg)
-
-    # Print a quick sample + summary
-    print(staff[0])
-    print(staff[1])
-    print(staff[2])
-
-    summary = staff_summary(staff)
-    print("\nSummary:")
-    for k, v in summary.items():
-        v_sorted = sorted(v) if isinstance(v, dict) else v
-        print(f"  {k}: {v_sorted}")
-
-    # Optional: dump to DataFrame
-    try:
-        import pandas as pd
-
-        df = staff_to_dataframe(staff)
-        print("\nHead:")
-        print(df.head(5).to_string(index=False))
-    except Exception:
-        pass

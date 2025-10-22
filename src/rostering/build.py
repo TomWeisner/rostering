@@ -1,19 +1,14 @@
-# src/rostering/build.py
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence, Tuple, cast
+from typing import Sequence, Tuple
 
 from ortools.sat.python import cp_model
 
 from rostering.config import Config
 from rostering.data import InputData
-from rostering.rules.base import RosterModel
+from rostering.rules.base import Rule
 from rostering.rules.objective import ObjectiveBuilder
 from rostering.rules.registry import RULE_REGISTRY
-
-if TYPE_CHECKING:
-    # Only imported for typing to avoid runtime cycles
-    from rostering.rules.base import Rule
 
 # Type aliases for readability
 ED = Tuple[int, int]  # (employee, day)
@@ -62,6 +57,13 @@ class BuildContext:
         """Translate literal indices from the solver into readable labels."""
         return [self.ASSUMP_LABEL.get(k, f"lit#{k}") for k in core]
 
+    def report_descriptors(self) -> list[dict]:
+        # Flatten descriptors from all rules
+        out: list[dict] = []
+        for r in self._rules:
+            out.extend(r.report_descriptors())
+        return out
+
 
 def build_model(cfg: Config, data: InputData) -> BuildContext:
     """
@@ -72,7 +74,7 @@ def build_model(cfg: Config, data: InputData) -> BuildContext:
     ctx = BuildContext(cfg, data)
 
     # Build sequence from registry
-    ctx._rules = RULE_REGISTRY.build_sequence(cast(RosterModel, ctx))
+    ctx._rules = RULE_REGISTRY.build_sequence(ctx=ctx)
 
     # Phase 1: variables
     for r in ctx._rules:
