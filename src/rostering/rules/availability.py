@@ -2,6 +2,8 @@ from rostering.rules.base import Rule
 
 
 class AvailabilityRule(Rule):
+    """Define staff availability (all except holidays)"""
+
     order = 20
     name = "Availability"
 

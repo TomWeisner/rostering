@@ -7,7 +7,7 @@ from rostering.build import build_model
 from rostering.config import Config
 from rostering.data import InputData
 from rostering.extract import (
-    compute_avg_run,
+    compute_agg_run,
     extract_employee_totals,
     extract_hourly,
     extract_shifts,
@@ -58,6 +58,7 @@ class RosterModel:
                 df_shifts=pd.DataFrame(),
                 df_emp=pd.DataFrame(),
                 avg_run=0.0,
+                max_run=0.0,
                 unsat_core_groups=unsat_groups,
             )
 
@@ -77,7 +78,8 @@ class RosterModel:
         df_sched = extract_hourly(self._ctx, solver)
         df_shifts = extract_shifts(self._ctx, solver)
         df_emp = extract_employee_totals(self._ctx, solver)
-        avg_run = compute_avg_run(self._ctx, solver)
+        avg_run = compute_agg_run(self._ctx, solver, agg="mean")
+        max_run = compute_agg_run(self._ctx, solver, agg="max")
         obj_val = solver.ObjectiveValue()
 
         return SolveResult(
@@ -87,6 +89,7 @@ class RosterModel:
             df_shifts=df_shifts,
             df_emp=df_emp,
             avg_run=avg_run,
+            max_run=max_run,
             unsat_core_groups={},
         )
 

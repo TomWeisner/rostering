@@ -33,12 +33,14 @@ class Config:
     RUN_PEN_SCALE_INT: int = 1000
 
     # Fairness
-    ENABLE_FAIRNESS: bool = True
     FAIRNESS_WEIGHT_PER_HOUR: int = 50  # integer weight
+    FAIRNESS_DEV_CAP: int = 40  # how many deviation tiers to model
+    FAIRNESS_TIER_WEIGHT: float = 10
+
     WEEKLY_MAX_HOURS: Optional[int] = 40  # None = disable
 
     # Solver
-    TIME_LIMIT_SEC: float = 20.0
+    TIME_LIMIT_SEC: float = 150.0
     NUM_WORKERS: int = 12
     LOG_EVERY_SEC: float = 5.0
 
@@ -155,20 +157,21 @@ def _to_pred(
 
 cfg = Config(
     HOURS=24,
-    DAYS=8,
+    DAYS=6,
     START_DATE=datetime(2023, 1, 1),
-    N=100,
+    N=50,
     MIN_SHIFT_H=4,
     MAX_SHIFT_H=12,
     REST_HOURS=12,
     RUN_PEN_PREF_FREE=5,
     RUN_PEN_BASE=2.0,
     RUN_PEN_SCALER=1.0,
-    RUN_PEN_SCALE_INT=1000,
-    ENABLE_FAIRNESS=True,
-    FAIRNESS_WEIGHT_PER_HOUR=50,
+    RUN_PEN_SCALE_INT=10,
+    FAIRNESS_WEIGHT_PER_HOUR=5,
+    FAIRNESS_DEV_CAP=40,
+    FAIRNESS_TIER_WEIGHT=1,
     WEEKLY_MAX_HOURS=40,
-    TIME_LIMIT_SEC=20.0,
+    TIME_LIMIT_SEC=15.0,
     NUM_WORKERS=12,
     LOG_EVERY_SEC=5.0,
     PRINT_PRECHECK_EXAMPLES=5,

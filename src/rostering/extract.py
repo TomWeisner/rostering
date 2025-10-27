@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -44,7 +45,7 @@ def extract_hourly(ctx: BuildContext, solver: cp_model.CpSolver) -> pd.DataFrame
                             "date": (C.START_DATE + timedelta(days=d))
                             .date()
                             .isoformat(),
-                            "day_index": d,
+                            "day": d,
                             "hour": h,
                             "employee_id": e,
                             "name": s.name,
@@ -58,7 +59,7 @@ def extract_hourly(ctx: BuildContext, solver: cp_model.CpSolver) -> pd.DataFrame
         return pd.DataFrame(
             columns=[
                 "date",
-                "day_index",
+                "day",
                 "hour",
                 "employee_id",
                 "name",
@@ -100,7 +101,7 @@ def extract_shifts(ctx: BuildContext, solver: cp_model.CpSolver) -> pd.DataFrame
                         "end_date": end_dt.date().isoformat(),
                         "end_hour": end_h,
                         "model_length_h": Lh,
-                        "day_index": d,
+                        "day": d,
                     }
                 )
     if not shift_rows:
@@ -113,7 +114,7 @@ def extract_shifts(ctx: BuildContext, solver: cp_model.CpSolver) -> pd.DataFrame
                 "end_date",
                 "end_hour",
                 "model_length_h",
-                "day_index",
+                "day",
             ]
         )
     df = (
@@ -154,7 +155,9 @@ def extract_employee_totals(
     return pd.DataFrame(rows).sort_values(["hours", "id"], ascending=[False, True])
 
 
-def compute_avg_run(ctx: BuildContext, solver: cp_model.CpSolver) -> float:
+def compute_agg_run(
+    ctx: BuildContext, solver: cp_model.CpSolver, agg: Literal["max", "mean"]
+) -> float:
     """Compute average run length over positive run values."""
     if not ctx.runlen:
         return 0.0
@@ -164,4 +167,6 @@ def compute_avg_run(ctx: BuildContext, solver: cp_model.CpSolver) -> float:
         for d in range(ctx.cfg.DAYS)
     ]
     pos = [v for v in vals if v > 0]
+    if agg == "max":
+        return max(pos)
     return float(np.mean(pos)) if pos else 0.0

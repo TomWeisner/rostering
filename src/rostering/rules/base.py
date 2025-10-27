@@ -2,15 +2,19 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    from rostering.config import Config
+    from rostering.data import InputData
 
 from ortools.sat.python import cp_model
 
 
 class BuildCtxProto(Protocol):
     m: cp_model.CpModel
-    cfg: Any
-    data: Any
+    cfg: Config
+    data: InputData
     x: dict[tuple[int, int, int], cp_model.IntVar]
 
     def add_assumption(self, label: str) -> cp_model.IntVar: ...

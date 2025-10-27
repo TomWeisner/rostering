@@ -11,6 +11,7 @@ class ObjectiveBuilder:
     Small helper that lets rules contribute penalty terms and emits a single LinearExpr.
 
     Usage:
+        weight = 10
         obj = ObjectiveBuilder()
         obj.add(weight * bool_var)
         model.Minimize(obj.linear_expr())
