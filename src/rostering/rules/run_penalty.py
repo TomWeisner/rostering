@@ -16,16 +16,22 @@ class RunPenaltyRule(Rule):
     def add_hard(self):
         C, m = self.model.cfg, self.model.m
         for e in range(C.N):
-            m.Add(self.model.runlen[(e, 0)] == self.model.z[(e, 0)])
+            ct = m.Add(self.model.runlen[(e, 0)] == self.model.z[(e, 0)])
+            self._guard(ct, f"RUNLEN-BASE[e={e}]")
             for d in range(1, C.DAYS):
-                m.Add(self.model.runlen[(e, d)] <= self.model.runlen[(e, d - 1)] + 1)
-                m.Add(self.model.runlen[(e, d)] <= C.DAYS * self.model.z[(e, d)])
-                m.Add(
-                    self.model.runlen[(e, d)]
-                    >= self.model.runlen[(e, d - 1)]
-                    + 1
-                    - C.DAYS * (1 - self.model.z[(e, d)])
+                expr_prev = self.model.runlen[(e, d - 1)]
+                expr_cur = self.model.runlen[(e, d)]
+
+                ct = m.Add(expr_cur <= expr_prev + 1)
+                self._guard(ct, f"RUNLEN-UP[e={e},d={d}]")
+
+                ct = m.Add(expr_cur <= C.DAYS * self.model.z[(e, d)])
+                self._guard(ct, f"RUNLEN-Z[e={e},d={d}]")
+
+                ct = m.Add(
+                    expr_cur >= expr_prev + 1 - C.DAYS * (1 - self.model.z[(e, d)])
                 )
+                self._guard(ct, f"RUNLEN-DOWN[e={e},d={d}]")
 
     def contribute_objective(self):
         C, m = self.model.cfg, self.model.m

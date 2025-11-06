@@ -9,7 +9,7 @@ class RestRule(Rule):
     Intervals:
       y[e,d] = 1 if day d has a shift
       S[e,d] = start hour (0..23)
-      L[e,d] = length (MIN_SHIFT_H..MAX_SHIFT_H)
+      L[e,d] = length (MIN_SHIFT_HOURS..MAX_SHIFT_HOURS)
 
     Constraint:
       If y[e,d] = y[e,d+1] = 1 then

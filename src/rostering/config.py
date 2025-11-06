@@ -8,53 +8,65 @@ SkillGrid: TypeAlias = list[list[dict[str, int]]]
 
 @dataclass
 class Config:
-    # Horizon
+
+    # Number of employees
+    N: int
+
+    # Planning horizon
     DAYS: int = 7
     HOURS: int = 24
     START_DATE: datetime = datetime(2025, 10, 13)  # Monday
 
-    # Workforce & demand
-    N: int = 100
+    ### HARD CONSTRAINTS ###
 
     # Shift rules
-    MIN_SHIFT_H: int = 4
-    MAX_SHIFT_H: int = 12
-
-    SKILL_MIN: Optional[SkillGrid] = None
-    SKILL_MAX: Optional[SkillGrid] = None
+    MIN_SHIFT_HOURS: int = 0
+    MAX_SHIFT_HOURS: int = 18
 
     # Rest
     REST_HOURS: int = 12  # set 0 to diagnose without rest
 
-    # Soft penalties: consecutive days worked
+    # Skills requiring certain coverage minimums (or maximums)
+    SKILL_MIN: Optional[SkillGrid] = None
+    SKILL_MAX: Optional[SkillGrid] = None
+
+    ### SOFT PENALTIES ###
+
+    # Consecutive days worked
     RUN_PEN_PREF_FREE: int = 5
     RUN_PEN_BASE: float = 2.0
     RUN_PEN_SCALER: float = 1.0
     RUN_PEN_SCALE_INT: int = 1000
 
     # Fairness
-    FAIRNESS_WEIGHT_PER_HOUR: int = 50  # integer weight
-    FAIRNESS_DEV_CAP: int = 40  # how many deviation tiers to model
-    FAIRNESS_TIER_WEIGHT: float = 10
+    FAIRNESS_BASE: float = 1.4
+    FAIRNESS_SCALE: float = 1.0
+    FAIRNESS_MAX_DEVIATION_HOURS: int = 45
 
     WEEKLY_MAX_HOURS: Optional[int] = 40  # None = disable
 
+    ### SOLVER SETUP ###
+
     # Solver
-    TIME_LIMIT_SEC: float = 150.0
-    NUM_WORKERS: int = 12
-    LOG_EVERY_SEC: float = 5.0
+    TIME_LIMIT_SEC: float = 60.0
+    NUM_PARALLEL_WORKERS: int = 1
+    LOG_SOLUTIONS_FREQUENCY_SECONDS: float = 5.0
 
     # Diagnostics
-    PRINT_PRECHECK_EXAMPLES: int = 5
     ENABLE_UNSAT_CORE: bool = True
-    PRINT_POSTSUM_HEAD: int = 10
 
-    # Inspect
+    # Detailed logging for employees with these IDs
     INSPECT_EMPLOYEE_IDS: list[int] = field(default_factory=lambda: [0, 1, 17])
 
+    # RANDOM SEED
+    SEED: Optional[int] = None
+
     def validate(self):
-        if not (0 < self.MIN_SHIFT_H <= self.MAX_SHIFT_H <= self.HOURS):
-            raise ValueError("Require 0 < MIN_SHIFT_H <= MAX_SHIFT_H <= HOURS.")
+        """
+        Validate the Config object has sensible values before solving.
+        """
+        if not (0 < self.MIN_SHIFT_HOURS <= self.MAX_SHIFT_HOURS <= self.HOURS):
+            raise ValueError("Require 0 < MIN_SHIFT_HOURS <= MAX_SHIFT_HOURS <= HOURS.")
         if not (0 <= self.REST_HOURS <= self.HOURS):
             raise ValueError("REST_HOURS must be in [0, HOURS].")
         if self.RUN_PEN_BASE < 1.0:
@@ -64,6 +76,10 @@ class Config:
             and self.WEEKLY_MAX_HOURS > self.DAYS * self.HOURS
         ):
             raise ValueError("WEEKLY_MAX_HOURS too large for horizon.")
+        if self.TIME_LIMIT_SEC <= 0.0:
+            raise ValueError("TIME_LIMIT_SEC must be > 0.")
+        if self.NUM_PARALLEL_WORKERS <= 0:
+            raise ValueError("NUM_PARALLEL_WORKERS must be > 0.")
 
 
 def _ensure_grids(C: Config) -> None:
@@ -160,24 +176,23 @@ cfg = Config(
     DAYS=6,
     START_DATE=datetime(2023, 1, 1),
     N=50,
-    MIN_SHIFT_H=4,
-    MAX_SHIFT_H=12,
+    MIN_SHIFT_HOURS=4,
+    MAX_SHIFT_HOURS=12,
     REST_HOURS=12,
     RUN_PEN_PREF_FREE=5,
     RUN_PEN_BASE=2.0,
     RUN_PEN_SCALER=1.0,
     RUN_PEN_SCALE_INT=10,
-    FAIRNESS_WEIGHT_PER_HOUR=5,
-    FAIRNESS_DEV_CAP=40,
-    FAIRNESS_TIER_WEIGHT=1,
+    FAIRNESS_BASE=1.25,
+    FAIRNESS_SCALE=100,
+    FAIRNESS_MAX_DEVIATION_HOURS=15,
     WEEKLY_MAX_HOURS=40,
-    TIME_LIMIT_SEC=15.0,
-    NUM_WORKERS=12,
-    LOG_EVERY_SEC=5.0,
-    PRINT_PRECHECK_EXAMPLES=5,
+    TIME_LIMIT_SEC=10.0,
+    NUM_PARALLEL_WORKERS=12,
+    LOG_SOLUTIONS_FREQUENCY_SECONDS=5.0,
     ENABLE_UNSAT_CORE=True,
-    PRINT_POSTSUM_HEAD=10,
     INSPECT_EMPLOYEE_IDS=field(default_factory=lambda: [0, 1, 17]),
+    SEED=3,
 )
 
 # always have 5+ staff working

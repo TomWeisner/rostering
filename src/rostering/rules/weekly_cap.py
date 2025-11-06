@@ -24,11 +24,8 @@ class WeeklyCapRule(Rule):
         C, M = self.model.cfg, self.model.m
         cap = int(C.WEEKLY_MAX_HOURS)
         for e in range(C.N):
-            M.Add(
-                sum(
-                    self.model.x[(e, d, h)]
-                    for d in range(C.DAYS)
-                    for h in range(C.HOURS)
-                )
-                <= cap
+            total = sum(
+                self.model.x[(e, d, h)] for d in range(C.DAYS) for h in range(C.HOURS)
             )
+            ct = M.Add(total <= cap)
+            self._guard(ct, f"WEEKLY-CAP[e={e}]")

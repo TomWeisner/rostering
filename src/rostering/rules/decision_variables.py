@@ -22,7 +22,7 @@ class VariablesRule(Rule):
             for d in range(C.DAYS)
         }
         self.model.L = {
-            (e, d): m.NewIntVar(C.MIN_SHIFT_H, C.MAX_SHIFT_H, f"L_e{e}_d{d}")
+            (e, d): m.NewIntVar(C.MIN_SHIFT_HOURS, C.MAX_SHIFT_HOURS, f"L_e{e}_d{d}")
             for e in range(C.N)
             for d in range(C.DAYS)
         }

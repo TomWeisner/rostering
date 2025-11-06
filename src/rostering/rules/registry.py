@@ -32,12 +32,13 @@ class RuleRegistry:
         instances: list[Rule] = [rule_cls(ctx) for rule_cls in self._rules]
         enabled = [r for r in instances if getattr(r, "enabled", True)]
         enabled.sort(key=lambda r: r.order)
+        print("SOLVER CONFIGURATION:")
         print(f"\nN={ctx.cfg.N:,} employees to be assigned shifts")
         print(
             f"D={ctx.cfg.DAYS:,} days to be covered, {ctx.cfg.HOURS:,} hours per day = {ctx.cfg.DAYS*ctx.cfg.HOURS:,} slots"
         )
         print(f"R={len(enabled):,} rules enabled")
-        print(f"P={ctx.cfg.NUM_WORKERS:,} parallel computes\n")
+        print(f"P={ctx.cfg.NUM_PARALLEL_WORKERS:,} parallel computes\n")
         return enabled
 
 

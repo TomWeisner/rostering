@@ -5,7 +5,7 @@ from functools import lru_cache
 from typing import Any, Callable, Set
 
 from rostering.config import Config
-from rostering.data import InputData
+from rostering.input_data import InputData
 from rostering.rules.base import Rule
 
 
@@ -192,7 +192,9 @@ class CoverageRule(Rule):
                         if (
                             a_e
                         ):  # if there are no vars, it's infeasible; let solver detect
-                            m.Add(sum(a_e) >= req)
+                            lhs = sum(a_e)
+                            ct = m.Add(lhs >= req)
+                            self._guard(ct, f"COV-MIN[s={s},d={d},h={h}]")
 
                 # Max: ∑_e a ≤ SKILL_MAX[d][h][s]
                 for s, cap in slot_max.items():
@@ -204,4 +206,6 @@ class CoverageRule(Rule):
                             if (e, d, h, s) in self.model.a
                         ]
                         if a_e:
-                            m.Add(sum(a_e) <= cap)
+                            lhs = sum(a_e)
+                            ct = m.Add(lhs <= cap)
+                            self._guard(ct, f"COV-MAX[s={s},d={d},h={h}]")

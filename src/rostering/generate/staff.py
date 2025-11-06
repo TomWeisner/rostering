@@ -16,11 +16,18 @@ from rostering.generate.staff_names import FIRST_NAMES
 # ----------------------------
 @dataclass(slots=True)
 class StaffGenConfig:
+    """
+    Configuration for generation of synthetic staff data.
+    """
+
     n: int = 100
+
     # Band distribution (must sum to 1.0)
     bands: Tuple[int, ...] = (1, 2, 3, 4)
+
     band_probs: Tuple[float, ...] = (0.70, 0.25, 0.04, 0.01)
-    # Skill probabilities by band: dict[band] -> (pA, pB), independent Bernoullis
+
+    # Skill probabilities by band: dict[band] -> (pA, pB)
     skill_probs: dict[int, Tuple[float, float]] = field(
         default_factory=lambda: {
             1: (0.50, 0.50),
@@ -29,22 +36,26 @@ class StaffGenConfig:
             4: (0.20, 0.01),
         }
     )
-    # Night worker fraction
+
+    # Proportion of worksers who are night workers
     night_worker_pct: float = 0.30
-    # Fraction with a consecutive-days cap and cap-choice distribution
+
+    # Fraction of workers employed with a consecutive-days contract cap and cap-choice distribution
     capped_pct: float = 0.10
     cap_choices: Tuple[int, ...] = (3, 4, 5)
     cap_weights: Tuple[float, ...] = (0.3, 0.4, 0.3)
 
     # Time-off parameters
     holiday_rate: float = 0.10  # per-person, per-day prob of hard holiday
-    pref_off_rate: float = 0.15  # per-person, per-day prob of soft preference
+    pref_off_rate: float = (
+        0.15  # per-person, per-day prob of soft preference for being off
+    )
 
-    # Rule 16 edges (nights 18–06; day spill and night spill)
+    # Times of day edges for shifts
     night_start: int = 18  # inclusive
     night_end: int = 6  # exclusive in wrap sense (0..6)
-    night_into_day_slack: int = 2  # night workers can extend 2h into day
-    day_into_night_slack: int = 1  # day workers can extend 1h into night
+    night_into_day_slack: int = 2  # night workers can extend 2h into day period
+    day_into_night_slack: int = 1  # day workers can extend 1h into night period
 
     # RNG seed
     seed: Optional[int] = 7
@@ -88,6 +99,10 @@ class StaffGenConfig:
 # ----------------------------
 @dataclass(slots=True)
 class Staff:
+    """
+    A staff member.
+    """
+
     id: int
     name: str
     band: int

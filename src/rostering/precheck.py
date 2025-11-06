@@ -2,19 +2,26 @@
 from __future__ import annotations
 
 import sys
-from typing import Dict, List, Set, Tuple
+from typing import Any, Dict, Iterable, List, Sequence, Set, Tuple
 
 import numpy as np
 
-from rostering.config import Config
-from rostering.data import InputData
+from rostering.config import Config, SkillGrid
+from rostering.input_data import InputData
 
 
-def _skills_in_min(C: Config) -> Set[str]:
-    out: Set[str] = set()
-    skill_min = getattr(C, "SKILL_MIN", None)
+def _skill_min_grid(cfg: Config) -> SkillGrid:
+    """Return the SKILL_MIN grid (or an empty grid if none provided)."""
+    skill_min: SkillGrid | None = getattr(cfg, "SKILL_MIN", None)
     if skill_min is None:
-        return out
+        D, H = int(cfg.DAYS), int(cfg.HOURS)
+        return [[{} for _ in range(H)] for _ in range(D)]
+    return skill_min
+
+
+def _skills_in_min(cfg: Config) -> Set[str]:
+    out: Set[str] = set()
+    skill_min = _skill_min_grid(cfg)
     for row in skill_min:
         for slot in row:
             out.update(slot.keys())
@@ -23,9 +30,7 @@ def _skills_in_min(C: Config) -> Set[str]:
 
 def _people_hour_lower_bound(cfg: Config) -> int:
     """Sum over (d,h) of max_s SKILL_MIN[d][h][s]. Headcount-only lower bound."""
-    skill_min = getattr(cfg, "SKILL_MIN", None)
-    if skill_min is None:
-        return 0
+    skill_min = _skill_min_grid(cfg)
     dem = 0
     for d in range(int(cfg.DAYS)):
         for h in range(int(cfg.HOURS)):
@@ -87,12 +92,54 @@ def _has_skill(st: object, skill: str) -> bool:
         return False
 
 
-def precheck_availability(cfg: Config, data: InputData) -> Tuple[
+def _skill_supply_counts(data: InputData, skills: Iterable[str]) -> Dict[str, int]:
+    counts = {s: 0 for s in skills}
+    if not counts:
+        return counts
+    for st in getattr(data, "staff", []):
+        for s in counts.keys():
+            if _has_skill(st, s):
+                counts[s] += 1
+    return counts
+
+
+def _skill_hour_holes(
+    data: InputData, skills: Sequence[str], allowed_mask: np.ndarray
+) -> Dict[str, List[int]]:
+    """
+    For each skill, list hour-of-day indices where zero qualified staff are allowed to work.
+    Holidays are ignored (we only look at structural availability).
+    """
+    H = allowed_mask.shape[1] if allowed_mask.size else 0
+    staff = getattr(data, "staff", [])
+    skill_to_emp: Dict[str, List[int]] = {
+        s: [e for e, st in enumerate(staff) if _has_skill(st, s)] for s in skills
+    }
+    holes: Dict[str, List[int]] = {s: [] for s in skills}
+    for s, idxs in skill_to_emp.items():
+        if not idxs:
+            # no staff possess this skill -> every hour is a structural hole
+            holes[s] = list(range(H))
+            continue
+        for h in range(H):
+            if not any(allowed_mask[e, h] for e in idxs):
+                holes[s].append(h)
+    return holes
+
+
+def precheck_availability(
+    cfg: Config,
+    data: InputData,
+    *,
+    verbose: bool = True,
+    examples_per_skill: int = 3,
+    stream=None,
+) -> Tuple[
     int,  # cap
     int,  # dem
     bool,  # ok_cap
     Dict[str, List[Tuple[int, int, int]]],  # buckets
-    Dict[str, Dict[str, int]],  # skill_stats
+    Dict[str, Dict[str, Any]],  # skill_stats
 ]:
     """
     Returns:
@@ -105,25 +152,33 @@ def precheck_availability(cfg: Config, data: InputData) -> Tuple[
           'available': sum of available-with-skill over those slots,
           'min_slack': min over slots of (available - required),
           'tight_slots': #slots where available == required,
-          'shortfall_slots': #slots where available < required
+          'shortfall_slots': #slots where available < required,
+          'staff_count': number of employees who possess this skill (any hour),
+          'has_any_staff': bool flag mirroring staff_count > 0
       }
+    If `verbose` is True, this function prints the header + per-skill status (including
+    skills that have demand but zero qualified staff) using `stream`.
     """
     # Capacity vs lower bound
     cap = _capacity_upper_bound_people_hours(cfg, data)
     dem = _people_hour_lower_bound(cfg)
     ok_cap = cap >= dem
+    stream = stream or sys.stdout
 
     # Setup
     N, D, H = int(cfg.N), int(cfg.DAYS), int(cfg.HOURS)
     skills_required = sorted(_skills_in_min(cfg))
     buckets: Dict[str, List[Tuple[int, int, int]]] = {s: [] for s in skills_required}
-    skill_stats: Dict[str, Dict[str, int]] = {
+    skill_supply = _skill_supply_counts(data, skills_required)
+    skill_stats: Dict[str, Dict[str, Any]] = {
         s: {
             "required": 0,
             "available": 0,
             "min_slack": 10**9,
             "tight_slots": 0,
             "shortfall_slots": 0,
+            "staff_count": skill_supply.get(s, 0),
+            "has_any_staff": skill_supply.get(s, 0) > 0,
         }
         for s in skills_required
     }
@@ -135,7 +190,8 @@ def precheck_availability(cfg: Config, data: InputData) -> Tuple[
         allowed_mask = np.asarray(allowed, dtype=bool)
         assert allowed_mask.shape == (N, H)
 
-    skill_min = getattr(cfg, "SKILL_MIN", None) or {}
+    skill_min = _skill_min_grid(cfg)
+    hour_holes = _skill_hour_holes(data, skills_required, allowed_mask)
 
     # Single pass: build buckets and stats together
     for d in range(D):
@@ -175,6 +231,16 @@ def precheck_availability(cfg: Config, data: InputData) -> Tuple[
         if dct["required"] == 0:
             dct["min_slack"] = 0
 
+    if verbose:
+        print_precheck_header(cap, dem, ok_cap)
+        print_skill_status(
+            buckets,
+            stats=skill_stats,
+            examples_per_skill=examples_per_skill,
+            stream=stream,
+        )
+        print_skill_hour_holes(hour_holes, stream=stream)
+
     return cap, dem, ok_cap, buckets, skill_stats
 
 
@@ -185,12 +251,15 @@ def print_precheck_header(cap: int, dem: int, ok_cap: bool) -> None:
         print(f"✅ Capacity = {cap:,} | people_hour_lower_bound = {dem:,} | OK")
     else:
         print(f"❌ Capacity = {cap:,} | people_hour_lower_bound = {dem:,} | NOT OK")
+    print(
+        "ℹ️  Pre-check only verifies raw capacity/skill availability; the fully solved model may still be infeasible if other constraints are violated."
+    )
 
 
 def print_skill_status(
     buckets: Dict[str, List[Tuple[int, int, int]]],
     *,
-    stats: Dict[str, Dict[str, int]],
+    stats: Dict[str, Dict[str, Any]],
     examples_per_skill: int = 3,
     stream=sys.stdout,
 ) -> None:
@@ -204,12 +273,33 @@ def print_skill_status(
             skill, {"required": 0, "available": 0, "min_slack": 0, "tight_slots": 0}
         )
 
-        suffix = f" | requires {st['required']:,}, have {st['available']:,}"
+        suffix = (
+            f" | requires {st.get('required', 0):,}, have {st.get('available', 0):,}"
+        )
         if st["required"] > 0:
-            suffix += f" (min slack {st['min_slack']}, tight {st['tight_slots']})"
+            suffix += (
+                f" (min slack={st['min_slack']} meaning worst-case available - required; "
+                f"tight slots={st['tight_slots']} where available == required)"
+            )
+        staff_count = st.get("staff_count", 0)
+        suffix += f" | staff with skill: {staff_count}"
 
         if not slots:
             print(f"✅ {skill} — satisfied{suffix}", file=stream)
+            continue
+
+        if not st.get("has_any_staff", True):
+            n = len(slots)
+            sample = ", ".join(
+                f"d={d},h={h:02d}" for d, h, _ in slots[:examples_per_skill]
+            )
+            more = f", +{n - examples_per_skill} more" if n > examples_per_skill else ""
+            print(
+                f"❌ {skill} — demanded in {n} slot(s) but no employee has this skill"
+                f"{(' — e.g. ' + sample + more) if sample else ''}"
+                f"{suffix}",
+                file=stream,
+            )
             continue
 
         n = len(slots)
@@ -221,5 +311,31 @@ def print_skill_status(
             f"❌ {skill} — {n} shortfall slot(s)"
             f"{(' — e.g. ' + sample + more) if sample else ''}"
             f"{suffix}",
+            file=stream,
+        )
+
+
+def print_skill_hour_holes(
+    hour_holes: Dict[str, List[int]],
+    *,
+    stream=sys.stdout,
+) -> None:
+    """Report hour-of-day indices that lack any eligible staff per skill."""
+    print("\nSkill/hour availability check:", file=stream)
+    any_gap = any(hour_holes.get(skill) for skill in hour_holes)
+    if not any_gap:
+        print(
+            "✅ Every skill has at least one eligible staff member for every hour.",
+            file=stream,
+        )
+        return
+    for skill in sorted(hour_holes.keys()):
+        hours = hour_holes.get(skill, [])
+        if not hours:
+            continue
+        sample = ", ".join(f"{h:02d}" for h in hours[:12])
+        more = f", +{len(hours) - 12} more" if len(hours) > 12 else ""
+        print(
+            f"❌ {skill} — no eligible staff for hour(s): {sample}{more}",
             file=stream,
         )

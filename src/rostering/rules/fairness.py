@@ -24,11 +24,15 @@ class FairnessRule(Rule):
     Soft-penalty for fairness: minimize L1 deviation from equal total hours.
 
     Config used:
-      ENABLE_FAIRNESS (bool)
       DAYS, HOURS, N
       WEEKLY_MAX_HOURS (optional upper bound per-employee)
-      FAIRNESS_WEIGHT_PER_HOUR (int)
+      FAIRNESS_WEIGHT_PER_HOUR (int)  -> base L1 weight
       SKILL_MIN (to derive the required-hours lower bound)
+
+      # Exponential tiering controls:
+      FAIRNESS_DEV_CAP (int, max deviation tiers to model, default=min(horizon_ub, 40))
+      FAIRNESS_TIER_BASE (float, >1.0, growth base, default=1.2)
+      FAIRNESS_TIER_SCALE_INT (int, positive, scale factor for integer weights, default=100)
     """
 
     order = 90
@@ -38,6 +42,14 @@ class FairnessRule(Rule):
         super().__init__(model)
 
     def contribute_objective(self):
+        """
+        Contribute to the model's objective function:
+        - if not `self.enabled`, returns an empty list
+        - if `C.N <= 0`, returns an empty list
+        - otherwise, returns linear terms that encourage equal total hours
+          across all employees, with an *exponentially increasing* penalty
+          for larger deviations from the equal-share target.
+        """
         if not self.enabled:
             return []
 
@@ -45,7 +57,7 @@ class FairnessRule(Rule):
         if C.N <= 0:
             return []
 
-        # Equal-share target (same as before)
+        # Equal-share target
         total_required_lb = _required_hours_lower_bound(C)
         target = total_required_lb / C.N  # may be fractional
         t_floor, t_ceil = int(np.floor(target)), int(np.ceil(target))
@@ -55,20 +67,27 @@ class FairnessRule(Rule):
         if getattr(C, "WEEKLY_MAX_HOURS", None) is not None:
             horizon_ub = min(horizon_ub, int(C.WEEKLY_MAX_HOURS))
 
-        # ---- NEW: tiering parameters (all optional in Config) ----
-        # How many hours of deviation to explicitly tier (controls model size).
-        DEV_CAP = int(getattr(C, "FAIRNESS_DEV_CAP", min(horizon_ub, 40)))
-        # Base weight for the original L1 term (your existing knob).
-        W_BASE = int(getattr(C, "FAIRNESS_WEIGHT_PER_HOUR", 1))
-        # Linear growth per hour of deviation (extra weight per hour beyond the base L1).
-        W_TIER = int(getattr(C, "FAIRNESS_TIER_WEIGHT", W_BASE))
+        # ---- Exponential tiering parameters ----
 
-        # If you ever want exponential tiers instead, you can switch to:
-        # BASE = float(getattr(C, "FAIRNESS_TIER_BASE", 1.2))
-        # SCALE = int(getattr(C, "FAIRNESS_TIER_SCALE_INT", 100))
-        # tier_weights = [int(round(SCALE * (BASE ** k))) for k in range(1, DEV_CAP + 1)]
-        # For now we use linear tiers:
-        tier_weights = [W_TIER * k for k in range(1, DEV_CAP + 1)]
+        # Do not penalise additionally if deviation is larger than this
+        DEV_CAP = int(getattr(C, "FAIRNESS_MAX_DEVIATION_HOURS", min(horizon_ub, 40)))
+
+        BASE = float(getattr(C, "FAIRNESS_BASE", 1.2))  # > 1.0
+        SCALE = int(getattr(C, "FAIRNESS_SCALE", 1))  # positive numver
+
+        print(
+            f"Fairness: Base={BASE}, Scale={SCALE}, Max Dev={DEV_CAP}\n"
+            f"Fairness penalty formula: Scale * ( Base ** Hours)\n"
+            f"Max fairness penalty: Scale * (Base ** Max Dev) = {SCALE} * ({BASE} ** {DEV_CAP}) == {SCALE * (BASE**DEV_CAP):,.3f}"
+        )
+
+        assert (
+            BASE > 1.0
+        ), "FAIRNESS_BASE must be > 1.0 to enable exponential growth of penalties"
+        assert SCALE >= 0
+
+        # Integer tier weights: w_k = round(SCALE * BASE^k), k = 1..DEV_CAP
+        tier_weights = [int(round(SCALE * (BASE**k))) for k in range(1, DEV_CAP + 1)]
 
         terms = []
 
@@ -89,12 +108,11 @@ class FairnessRule(Rule):
             M.Add(dev >= T_e - t_floor)
             M.Add(dev >= t_ceil - T_e)
 
-            # Keep your base L1 fairness penalty
-            terms.append(W_BASE * dev)
+            # Base L1 fairness penalty
+            terms.append(dev)
 
-            # ---- NEW: tiered, increasing penalty that hits outliers harder ----
+            # ---- Exponential tiered penalty for outliers ----
             # b_{e,k} = 1  iff  dev >= k,   for k = 1..DEV_CAP
-            # Adds a convex piecewise-linear penalty without quadratics.
             for k, w_k in enumerate(tier_weights, start=1):
                 b = M.NewBoolVar(f"dev_ge_{k}_e{e}")
                 M.Add(dev >= k).OnlyEnforceIf(b)

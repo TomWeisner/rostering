@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
     from rostering.config import Config
-    from rostering.data import InputData
+    from rostering.input_data import InputData
 
 from ortools.sat.python import cp_model
 
@@ -27,6 +27,21 @@ class Rule(ABC):
 
     def __init__(self, model: BuildCtxProto) -> None:
         self.model: BuildCtxProto = model
+
+    def _assumption_literal(self, label: str | None) -> cp_model.IntVar | None:
+        """Return an assumption literal (or None) honoring ENABLE_UNSAT_CORE."""
+        if not label:
+            return None
+        cfg = getattr(self.model, "cfg", None)
+        if cfg and getattr(cfg, "ENABLE_UNSAT_CORE", False):
+            return self.model.add_assumption(label)
+        return None
+
+    def _guard(self, constraint: cp_model.Constraint, label: str | None) -> None:
+        """Attach readable UNSAT guards without duplicating constraints."""
+        lit = self._assumption_literal(label)
+        if lit is not None:
+            constraint.OnlyEnforceIf(lit)
 
     def declare_vars(self) -> None:
         return

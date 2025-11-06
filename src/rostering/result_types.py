@@ -19,3 +19,4 @@ class SolveResult:
     avg_run: float
     max_run: float
     unsat_core_groups: dict[str, list[str]]
+    progress_history: list[tuple[float, float, float]] | None = None

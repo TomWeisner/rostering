@@ -5,13 +5,13 @@ import pandas as pd
 
 from rostering.build import build_model
 from rostering.config import Config
-from rostering.data import InputData
 from rostering.extract import (
     compute_agg_run,
     extract_employee_totals,
     extract_hourly,
     extract_shifts,
 )
+from rostering.input_data import InputData
 from rostering.precheck import precheck_availability
 from rostering.result_types import SolveResult
 from rostering.solver import solve_model
@@ -37,17 +37,48 @@ class RosterModel:
 
     # ---------- Build ----------
     def build(self):
+        """
+        Build the CP-SAT model by running each registered Rule through the 4 phases:
+          1) declare_vars  2) add_hard  3) add_soft  4) contribute_objective
+        Then attach the final objective and run sanity checks.
+        """
         self._ctx = build_model(self.cfg, self.data)
 
     # ---------- Solve ----------
     def solve(self, progress_cb=None) -> SolveResult:
+        """
+        Solve the CP-SAT model.
+
+        If the model is infeasible, the method will return early with
+        unsat_core_groups containing the unsatisfiable core.
+
+        Otherwise, it will return a SolveResult object with the final
+        status, objective value, and extracted results as pandas DataFrames
+        and summary statistics.
+
+        Parameters:
+        progress_cb (callable): a progress callback function for the solver
+
+        Returns:
+        SolveResult: a structured object containing the final status, objective
+        value, extracted results, and summary statistics
+        """
         if self._ctx is None:
             raise RuntimeError("Call build() before solve().")
 
-        print("Solving...")
+        print("\nSolving...")
         solver, status_name, unsat_groups = solve_model(
             self._ctx, progress_cb=progress_cb
         )
+
+        progress_history = None
+        if progress_cb is not None:
+            if hasattr(progress_cb, "solution_history") and callable(
+                getattr(progress_cb, "solution_history")
+            ):
+                progress_history = progress_cb.solution_history()
+            else:
+                progress_history = getattr(progress_cb, "history", None)
 
         # Infeasible? return early with core info
         if status_name == "INFEASIBLE":
@@ -60,6 +91,7 @@ class RosterModel:
                 avg_run=0.0,
                 max_run=0.0,
                 unsat_core_groups=unsat_groups,
+                progress_history=progress_history,
             )
 
         # Non-final status (e.g., UNKNOWN) — still return what we can
@@ -72,6 +104,8 @@ class RosterModel:
                 pd.DataFrame(),
                 0.0,
                 {},
+                unsat_core_groups=unsat_groups,
+                progress_history=progress_history,
             )
 
         # Extract results
@@ -91,6 +125,7 @@ class RosterModel:
             avg_run=avg_run,
             max_run=max_run,
             unsat_core_groups={},
+            progress_history=progress_history,
         )
 
     def get_report_descriptors(self) -> list[dict]:
