@@ -15,10 +15,10 @@
 
 ## Contents
 
-1. [Why rostering?](#-features)
+1. [Features](#-features)
 2. [Quick start](#-quick-start)
 3. [How the optimiser works](#-how-the-optimiser-works)
-4. [Running & monitoring solves](#-running--monitoring-solves)
+4. [Running & monitoring](#-running--monitoring)
 5. [Project tooling](#-project-tooling)
 6. [Contributing](#-contributing)
 7. [Publishing](#-publishing-to-testpypi)
@@ -76,7 +76,7 @@ What happens:
 
 1. `rostering.config.cfg` is validated and used to generate synthetic staff/input data.
 2. The CP-SAT model is built (`rostering.build` + rules in `rostering.rules.*`).
-3. The solver runs with `MinimalProgress` printing improvements and storing history.
+3. The solver runs with `MinimalProgress` printing progress and storing history.
 4. `Reporter.post_solve` prints textual summaries and writes plots to `./figures/`:
    - Hour-of-day coverage stacked bars
    - Best objective vs. solver bound (line plot) with elapsed-time overlay
@@ -90,7 +90,7 @@ Everything is deterministic as long as you keep the default seeds in `Config` an
 | Stage | Module(s) | Description |
 | --- | --- | --- |
 | **Config & data** | `rostering.config`, `rostering.generate.*` | Define planning horizon, penalties, coverage minima and create synthetic staff (skills, availability, preferences). |
-| **Pre-check** | `rostering.precheck` | Quick feasibility sniff-test: capacity vs. demand, per-skill availability gaps, warning if no staff own a demanded skill. |
+| **Pre-check** | `rostering.precheck` | Quick feasibility check: capacity vs. demand, per-skill availability gaps, warning if no staff own a demanded skill. |
 | **Model build** | `rostering.build`, `rostering.rules.*` | `BuildContext` wires decision variables (`y/S/L/x/z`), and each rule registers hard/soft constraints + objective terms. |
 | **Solve** | `rostering.solver`, `rostering.progress` | CP-SAT searches for minimum-penalty rosters. `MinimalProgress` logs solutions, tracks wall-clock/obj history for plotting. UNSAT cores are translated back to readable rule names. |
 | **Reporting** | `rostering/reporting/` package | Modular reporters compute coverage metrics, slot gaps, fairness stats, and render plots or textual summaries. |
@@ -103,7 +103,7 @@ Key rule highlights:
 
 ---
 
-## 📊 Running & monitoring solves
+## 📊 Running & monitoring
 
 1. **Progress callback** – every `LOG_SOLUTIONS_FREQUENCY_SECONDS`:
    ```text
@@ -114,7 +114,7 @@ Key rule highlights:
    - `ratio` = |best| / |solver bound| (closer to 1 → proven optimal)
    - `sols` = solution count
 
-2. **Saved history** – `MinimalProgress.solution_history()` feeds the reporter so the *Solution progress* plot shows best objective & solver bound over solution index with elapsed-time overlay.
+2. **Saved history** – `MinimalProgress.solution_history()` feeds the reporter so we can produce a *Solution progress plot*
 
 3. **Textual report** – after solving, `Reporter.render_text_report` prints:
    - Per-employee hours and stats
