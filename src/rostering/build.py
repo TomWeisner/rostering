@@ -5,7 +5,7 @@ from typing import Sequence, Tuple
 from ortools.sat.python import cp_model
 
 from rostering.config import Config
-from rostering.data import InputData
+from rostering.input_data import InputData
 from rostering.rules.base import Rule
 from rostering.rules.objective import ObjectiveBuilder
 from rostering.rules.registry import RULE_REGISTRY

@@ -13,9 +13,9 @@ from rostering.config import Config
 def setup_solver(cfg: Config) -> cp_model.CpSolver:
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = cfg.TIME_LIMIT_SEC
-    solver.parameters.num_search_workers = cfg.NUM_WORKERS
+    solver.parameters.num_search_workers = cfg.NUM_PARALLEL_WORKERS
     solver.parameters.log_search_progress = False
-    solver.parameters.log_to_stdout = False
+    solver.parameters.log_to_stdout = True
     return solver
 
 

@@ -1,0 +1,94 @@
+from __future__ import annotations
+
+import sys
+from typing import Any
+
+from rostering.input_data import InputData
+
+from .adapters import PandasResultAdapter, ResultAdapter
+from .plots import show_hour_of_day_histograms, show_solution_progress
+from .text_report import render_text_report
+
+
+class Reporter:
+    """High-level orchestrator: runs pre-check confirmations and renders reports."""
+
+    def __init__(
+        self,
+        cfg: Any,
+        adapter: ResultAdapter | None = None,
+        num_print_examples: int = 6,
+        enable_plots: bool = True,
+    ) -> None:
+        """
+        cfg must expose:
+          - DAYS / HOURS
+          - SKILL_MIN grid
+          - allowed mask + staff holidays via InputData
+        """
+        self.cfg = cfg
+        self.adapter: ResultAdapter = adapter or PandasResultAdapter()
+        self.num_print_examples = num_print_examples
+        self.enable_plots = enable_plots
+
+    # ---------- Back-compat entry points ----------
+
+    def pre_solve(self, model: object) -> None:
+        """Run the model's precheck() if available, confirming continuation when infeasible."""
+        precheck = getattr(model, "precheck", None)
+        if not callable(precheck):
+            print("Pre-check: (model has no `precheck()`; skipping)")
+            return
+
+        cap, dem, ok_cap, *_ = precheck()
+        if not ok_cap:
+            proceed = self._prompt_yes_no_default_yes(
+                "Pre-check indicates infeasibility. Continue anyway?"
+            )
+            if not proceed:
+                raise SystemExit("Stopped by user after infeasible pre-check.")
+
+    def render_text_report(self, res: object, data: object) -> None:
+        """Public entry point for callers that want text reporting only."""
+        render_text_report(
+            self.cfg,
+            self.adapter,
+            res,
+            data,  # type: ignore[arg-type]
+            num_print_examples=self.num_print_examples,
+        )
+
+    def post_solve(self, res: object, data: object) -> None:
+        """Render textual report (and optional plots) after solving."""
+        self.render_text_report(res, data)
+        if isinstance(data, InputData):
+            show_hour_of_day_histograms(
+                self.cfg,
+                res,
+                data,
+                self.adapter,
+                enable_plot=self.enable_plots,
+            )
+        history = getattr(res, "progress_history", None)
+        if self.enable_plots and history:
+            show_solution_progress(history)
+
+    # ---------- helpers ----------
+
+    def _prompt_yes_no_default_yes(self, msg: str) -> bool:
+        """Prompt '[Y/n]' and return True for yes (default)."""
+        try:
+            if not sys.stdin or not sys.stdin.isatty():
+                print(f"{msg} [Y/n] (non-interactive -> default: Y)")
+                return True
+
+            while True:
+                resp = input(f"{msg} [Y/n]: ").strip().lower()
+                if resp in ("", "y", "yes"):
+                    return True
+                if resp in ("n", "no"):
+                    return False
+                print("Please type 'y' or 'n'.")
+        except (EOFError, KeyboardInterrupt):
+            print("\nAborted by user.")
+            return False

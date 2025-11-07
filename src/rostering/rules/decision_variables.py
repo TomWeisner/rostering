@@ -2,11 +2,14 @@ from rostering.rules.base import Rule
 
 
 class VariablesRule(Rule):
+    """Define decision variables"""
+
     order = 10
     name = "Variables"
 
     def declare_vars(self):
-        C, m = self.model.cfg, self.model.m
+        C = self.model.cfg
+        m = self.model.m
         # Intervals: one optional shift per employee/day
         self.model.y = {
             (e, d): m.NewBoolVar(f"y_e{e}_d{d}")
@@ -19,7 +22,7 @@ class VariablesRule(Rule):
             for d in range(C.DAYS)
         }
         self.model.L = {
-            (e, d): m.NewIntVar(C.MIN_SHIFT_H, C.MAX_SHIFT_H, f"L_e{e}_d{d}")
+            (e, d): m.NewIntVar(C.MIN_SHIFT_HOURS, C.MAX_SHIFT_HOURS, f"L_e{e}_d{d}")
             for e in range(C.N)
             for d in range(C.DAYS)
         }

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rostering"
-version = "1.1.0"
+version = "1.2.0"
 description = "Optimise colleague shift assignments based on employee holidays/preferences and business needs."
 authors = ["tom-weisner <tomweisner@hotmail.com>"]
 readme = "README.md"
@@ -29,6 +29,7 @@ python = ">=3.11,<4.0"
 numpy = "^2.3.3"
 ortools = "^9.14.6206"
 pandas = "^2.3.3"
+matplotlib = "^3.10.7"
 
 [tool.poetry.group.dev.dependencies]
 nox = "^2025.5.1"

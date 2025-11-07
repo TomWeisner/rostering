@@ -65,10 +65,14 @@ def test_progress_callback_is_called(solver, callback, mock_print):
     # Optional: verify a sane log format without overfitting on exact numbers
     args, _ = mock_print.call_args  # last call
     line = args[0] if args else ""
-    # Example expected fields: "[  0.1s] sols=... | best=... | bound=..."
-    assert "sols=" in line
+    # Example expected fields: "[  0.1s] pct=.. | best=.. | ratio=.. | sols=.."
+    assert "pct=" in line
     assert "best=" in line
-    assert "optimal=" in line
-    assert "gap=" in line
+    assert "ratio=" in line
+    assert "sols=" in line
     # starts with bracketed seconds
     assert re.match(r"^\[\s*\d+(\.\d+)?s\]\s", line)
+
+    # History should record at least one entry
+    assert getattr(callback, "history", None), "Expected history to capture progress"
+    assert len(callback.solution_history()) == len(callback.history)
