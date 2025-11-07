@@ -13,137 +13,187 @@
 
 ---
 
-## ✨ Features
+## Contents
 
-* **Hard constraints:** e.g. maximum consecutive nights, legal time limits, required coverage
-* **Soft constraints with penalties:** e.g. avoid split shifts, overly long shifts, or preference mismatches
-* **Fairness-aware objective:** tunable weights for equitable scheduling
-* **Reproducible runs:** deterministic seeds for consistent results
-* **Modern tooling:** Poetry for dependencies, Nox for automation, pre-commit hooks for quality
+1. [Why rostering?](#-features)
+2. [Quick start](#-quick-start)
+3. [How the optimiser works](#-how-the-optimiser-works)
+4. [Running & monitoring solves](#-running--monitoring-solves)
+5. [Project tooling](#-project-tooling)
+6. [Contributing](#-contributing)
+7. [Publishing](#-publishing-to-testpypi)
 
 ---
 
-## 🧩 Installation
+## ✨ Features
 
-### Option 1 — via `pip`
+- **Hard constraints:** e.g. minimum rest between shifts, per-skill coverage, legal hour caps
+- **Soft penalties:** tunable costs for preference mismatches, long runs, unfair hour distribution
+- **Fairness-aware objective:** exponential tiers to rein in big hour discrepancies
+- **Progress visibility:** console callback plus saved plots of solution quality vs. solve progress
+- **Reproducibility:** deterministic seeds at every generation step
+- **Modern tooling:** Poetry, Nox, Ruff, pre-commit, GitHub Actions
+
+---
+
+## 🚀 Quick start
+
+### 1. Install (choose one)
+
+**pip / TestPyPI**
 
 ```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple rostering
+pip install --index-url https://test.pypi.org/simple/ \
+            --extra-index-url https://pypi.org/simple \
+            rostering
 ```
 
-### Option 2 — via `Poetry`
+**Poetry**
 
 ```bash
-# One-time setup to add TestPyPI
 poetry source add --priority explicit testpypi https://test.pypi.org/simple/
-
-# Add the package
 poetry add --source testpypi rostering
 ```
 
----
-
-## 🤝 Contributing
-
-### 1️⃣ Clone & Set Up
+### 2. Clone the repo for local development
 
 ```bash
 git clone https://github.com/TomWeisner/rostering.git
 cd rostering
-code .
-```
-
-### 2️⃣ Install dependencies
-
-```bash
 poetry install
 poetry config virtualenvs.in-project true
 source .venv/bin/activate
 poetry run pre-commit install
 ```
 
-### 3️⃣ Run tests
+### 3. Run the optimiser
 
 ```bash
-pytest -q
+poetry run python -m src.rostering.main
 ```
+
+What happens:
+
+1. `rostering.config.cfg` is validated and used to generate synthetic staff/input data.
+2. The CP-SAT model is built (`rostering.build` + rules in `rostering.rules.*`).
+3. The solver runs with `MinimalProgress` printing improvements and storing history.
+4. `Reporter.post_solve` prints textual summaries and writes plots to `./figures/`:
+   - Hour-of-day coverage stacked bars
+   - Best objective vs. solver bound (line plot) with elapsed-time overlay
+
+Everything is deterministic as long as you keep the default seeds in `Config` and `StaffGenConfig`.
 
 ---
 
-## 🧪 Development
+## 🧠 How the optimiser works
 
-### Adding dependencies
+| Stage | Module(s) | Description |
+| --- | --- | --- |
+| **Config & data** | `rostering.config`, `rostering.generate.*` | Define planning horizon, penalties, coverage minima and create synthetic staff (skills, availability, preferences). |
+| **Pre-check** | `rostering.precheck` | Quick feasibility sniff-test: capacity vs. demand, per-skill availability gaps, warning if no staff own a demanded skill. |
+| **Model build** | `rostering.build`, `rostering.rules.*` | `BuildContext` wires decision variables (`y/S/L/x/z`), and each rule registers hard/soft constraints + objective terms. |
+| **Solve** | `rostering.solver`, `rostering.progress` | CP-SAT searches for minimum-penalty rosters. `MinimalProgress` logs solutions, tracks wall-clock/obj history for plotting. UNSAT cores are translated back to readable rule names. |
+| **Reporting** | `rostering/reporting/` package | Modular reporters compute coverage metrics, slot gaps, fairness stats, and render plots or textual summaries. |
+
+Key rule highlights:
+
+- `rest.py`, `weekly_cap.py`, `run_penalty.py`: enforce rest hours, weekly caps, and penalise long consecutive runs.
+- `coverage.py`: ensures per-skill hour minima/maxima and links per-skill variables to hour-level work decisions.
+- `objective.py`: bundles all penalty terms (fairness, run penalties, etc.) into the single CP objective.
+
+---
+
+## 📊 Running & monitoring solves
+
+1. **Progress callback** – every `LOG_SOLUTIONS_FREQUENCY_SECONDS`:
+   ```text
+   [  3.0s] pct= 20.00% | best=12,345 | ratio=1.050 | sols=3
+   ```
+   - `pct` = elapsed time vs. limit
+   - `best` = best objective found so far (penalty total)
+   - `ratio` = |best| / |solver bound| (closer to 1 → proven optimal)
+   - `sols` = solution count
+
+2. **Saved history** – `MinimalProgress.solution_history()` feeds the reporter so the *Solution progress* plot shows best objective & solver bound over solution index with elapsed-time overlay.
+
+3. **Textual report** – after solving, `Reporter.render_text_report` prints:
+   - Per-employee hours and stats
+   - Coverage metrics (`assigned_people_hours`, `skill_demand_hours`, coverage ratio)
+   - Slot-gap table for headcount shortfalls
+   - Objective value, fairness metrics, consecutive-day summaries
+
+4. **Plots directory** – each run creates `figures/hour_of_day_hist.png` and `figures/solution_progress.png`. Remove or archive them between runs if you want a clean slate.
+
+---
+
+## 🧪 Project tooling
+
+### Testing & linting (Nox)
 
 ```bash
-# Runtime dependencies
-poetry add numpy
+nox -L            # list sessions
+nox -s lint       # lint only
+nox               # run everything (format, lint, typecheck, tests)
+```
 
-# Dev tools
-poetry add --group dev black
+| Session | Purpose | Tools |
+| --- | --- | --- |
+| `format` | Auto-format code | black, isort |
+| `lint` | Lint/style checks | ruff, black, isort |
+| `typecheck_mypy` | Static typing | mypy |
+| `tests` | Unit tests | pytest + coverage |
 
-# Test-only libraries
+### Pre-commit
+
+```bash
+poetry run pre-commit install
+poetry run pre-commit run --all-files
+```
+
+Hooks include Black, isort, Ruff, mypy, YAML checks, whitespace fixers, etc. (see `.pre-commit-config.yaml`).
+
+### Dependency management
+
+```bash
+poetry add numpy            # runtime dep
+poetry add --group dev ruff # dev-only dep
 poetry add --group test pytest hypothesis
 ```
 
 ---
 
-## ⚙️ Nox Automation
+## 🤝 Contributing
 
-This project uses **[Nox](https://nox.thea.codes/)** (with [nox-poetry](https://nox-poetry.readthedocs.io/)) to automate linting, formatting, type checks, and testing in isolated virtual environments.
+1. Fork & clone
+2. `poetry install && poetry run pre-commit install`
+3. Create a feature branch
+4. Add tests (`tests/` already has coverage for generators, reporting, solver progress, etc.)
+5. Run `nox` locally before pushing
+6. Open a PR against `dev`
 
-### Setup
-
-```bash
-poetry add --group dev nox nox-poetry
-```
-
-### Run sessions
-
-```bash
-nox -L            # list sessions
-nox -s lint       # run a specific session
-nox               # run all sessions
-```
-
-| Session          | Purpose              | Tools Used         |
-| ---------------- | -------------------- | ------------------ |
-| `format`         | Auto-format code     | black, isort       |
-| `lint`           | Lint/style checks    | ruff, black, isort |
-| `typecheck_mypy` | Static type checking | mypy               |
-| `tests`          | Run unit tests       | pytest             |
+Issues/feature requests welcome!
 
 ---
 
-## 💅 Pre-commit Hooks
-
-**[pre-commit](https://pre-commit.com/)** ensures consistent formatting and catches common issues before commits.
-
-### Setup
-
-```bash
-poetry install --with dev
-poetry run pre-commit install
-
-# Run manually
-poetry run pre-commit run --all-files
-```
-
-### Hooks Overview
-
-| Hook                     | Description                          |
-| ------------------------ | ------------------------------------ |
-| **Black**                | Formats code to PEP 8.               |
-| **isort**                | Sorts imports into logical groups.   |
-| **Ruff**                 | Fast linter replacing Flake8/pylint. |
-| **Mypy**                 | Static type checking.                |
-| **check-yaml**           | Validates YAML syntax.               |
-| **end-of-file-fixer**    | Ensures a trailing newline.          |
-| **trailing-whitespace**  | Removes stray spaces.                |
-| **check-merge-conflict** | Detects unresolved merge conflicts.  |
-
----
-
-## 🚀 Publishing to TestPyPI
+## 📦 Publishing to TestPyPI
 
 1. Raise a PR into `dev`
-2. Wait for GitHub Actions to pass — one action automatically uploads to TestPyPI a version of the package with an incremented version number
+2. GitHub Actions (`tests.yml`) runs lint/typecheck/tests and, on success, builds the wheel/sdist
+3. The CI workflow publishes to TestPyPI with an incremented version number
+
+Once satisfied, bump the real PyPI release separately (outside this repo’s automation).
+
+---
+
+## 📚 Helpful entry points
+
+| Purpose | Module |
+| --- | --- |
+| Configure runs | `src/rostering/config.py` |
+| Generate synthetic staff/data | `src/rostering/generate/` |
+| Build/solve orchestration | `src/rostering/model.py` |
+| Constraint rules | `src/rostering/rules/` |
+| Progress callback | `src/rostering/progress.py` |
+| Reporting | `src/rostering/reporting/` |
+
+Happy rostering! 🗓️

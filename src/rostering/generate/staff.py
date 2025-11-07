@@ -226,12 +226,11 @@ def assign_time_off(
         raise ValueError("holiday_rate and pref_off_rate must be in [0,1].")
     g = _rng(seed)
     for s in staff:
-        hol_idx = np.where(g.random(days) < holiday_rate)[0].tolist()
-        pref_idx = np.where(g.random(days) < pref_off_rate)[0].tolist()
+        hol = set(np.where(g.random(days) < holiday_rate)[0])
+        pref = set(np.where(g.random(days) < pref_off_rate)[0])
         # soft prefs cannot overlap hard holidays
-        pref = set(pref_idx) - set(hol_idx)
-        s.holidays = set(hol_idx)
-        s.pref_off = pref
+        s.holidays = hol
+        s.pref_off = pref - hol
 
 
 def allowed_hours_for_staff(
@@ -248,14 +247,13 @@ def allowed_hours_for_staff(
         raise ValueError("night_start/night_end must be within [0..23].")
     allow = [False] * 24
 
-    def mark_range(start: int, end_excl: int):
+    def mark_range(start: int, end_excl: int) -> None:
         """Mark [start, end_excl) modulo 24 as allowed."""
-        h = start
-        while True:
-            allow[h % 24] = True
-            h += 1
-            if h % 24 == end_excl % 24:
-                break
+        steps = end_excl - start
+        if steps <= 0:
+            steps = 24
+        for offset in range(steps):
+            allow[(start + offset) % 24] = True
 
     # canonical day window
     day_start, day_end = 6, 18  # 06:00–18:00
@@ -299,14 +297,14 @@ def build_allowed_matrix(staff: list[Staff], cfg: StaffGenConfig) -> np.ndarray:
 
 def staff_summary(staff: list[Staff]) -> dict:
     n = len(staff)
-    bands: dict[int, float] = {}
-    A = sum(1 if "A" in s.skills else 0 for s in staff)
-    B = sum(1 if "B" in s.skills else 0 for s in staff)
-    SENIOR = sum(1 if "SENIOR" in s.skills else 0 for s in staff)
+    from collections import Counter
+
+    bands = Counter(s.band for s in staff)
+    A = sum("A" in s.skills for s in staff)
+    B = sum("B" in s.skills for s in staff)
+    SENIOR = sum("SENIOR" in s.skills for s in staff)
     night = sum(s.is_night_worker for s in staff)
-    capped = sum(1 for s in staff if s.consec_cap is not None)
-    for s in staff:
-        bands[s.band] = bands.get(s.band, 0) + 1
+    capped = sum(s.consec_cap is not None for s in staff)
     return {
         "N": n,
         "bands": bands,
