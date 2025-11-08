@@ -167,6 +167,8 @@ def compute_agg_run(
         for d in range(ctx.cfg.DAYS)
     ]
     pos = [v for v in vals if v > 0]
+    if not pos:
+        return 0.0
     if agg == "max":
-        return max(pos)
-    return float(np.mean(pos)) if pos else 0.0
+        return float(max(pos))
+    return float(np.mean(pos))

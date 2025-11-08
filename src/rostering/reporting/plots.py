@@ -9,11 +9,12 @@ from rostering.input_data import InputData
 
 from .adapters import ResultAdapter
 from .metrics import avg_staffing_by_hour_and_skill
+from .text_report import get_active_report
 
 
 def _save_and_show(fig: plt.Figure, filename: str) -> None:
-    """Persist the plot under figures/ and show it."""
-    out_dir = Path("figures")
+    """Persist the plot under outputs/ and show it."""
+    out_dir = Path("outputs")
     out_dir.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_dir / filename, dpi=fig.dpi, bbox_inches="tight")
     plt.show()
@@ -43,6 +44,7 @@ def show_hour_of_day_histograms(
 
     bottom = [0.0] * len(hours)
     fig, ax = plt.subplots(figsize=(7, 4), dpi=150)
+    ax.set_title("Skill coverage by hour of day")
     for i, (skill, series) in enumerate(per_skill.items()):
         if skill == "ANY":
             continue
@@ -74,6 +76,9 @@ def show_hour_of_day_histograms(
     ax.legend(title="Skill", ncol=2)
     fig.tight_layout()
     _save_and_show(fig, "hour_of_day_skill_bar_chart.png")
+    report = get_active_report()
+    if report is not None:
+        report.add_figure(fig)
 
 
 def show_solution_progress(history: Sequence[tuple[float, float, float]]) -> None:
@@ -90,19 +95,26 @@ def show_solution_progress(history: Sequence[tuple[float, float, float]]) -> Non
     bound_vals = [pt[2] for pt in history]
 
     fig, ax = plt.subplots(figsize=(7, 4), dpi=150)
+    ax.set_title("Solution progress and penalty history")
+    penalty_color = "tab:blue"
+    bound_color = "tab:red"
+    time_color = "tab:green"
+
     ax.plot(
-        solution_idx, best_vals, label="Best objective", color="tab:blue", linewidth=1.5
+        solution_idx, best_vals, label="Penalty", color=penalty_color, linewidth=1.5
     )
     ax.plot(
         solution_idx,
         bound_vals,
         label="Solver lower bound",
-        color="tab:red",
+        color=bound_color,
         linestyle="--",
         linewidth=1.25,
     )
     ax.set_xlabel("Solution # (in discovery order)")
-    ax.set_ylabel("Penalty")
+    ax.set_ylabel("Penalty (smallest found over all solutions)", color=penalty_color)
+    ax.tick_params(axis="y", colors=penalty_color)
+    ax.spines["left"].set_color(penalty_color)
     ax.set_xlim(0, len(history) + 1)
 
     ax_time = ax.twinx()
@@ -110,11 +122,13 @@ def show_solution_progress(history: Sequence[tuple[float, float, float]]) -> Non
         solution_idx,
         times,
         label="Elapsed time (s)",
-        color="tab:green",
+        color=time_color,
         linewidth=1.5,
         alpha=0.7,
     )
-    ax_time.set_ylabel("Elapsed time (s)")
+    ax_time.set_ylabel("Elapsed time (s)", color=time_color)
+    ax_time.tick_params(axis="y", colors=time_color)
+    ax_time.spines["right"].set_color(time_color)
 
     lines, labels = ax.get_legend_handles_labels()
     lines2, labels2 = ax_time.get_legend_handles_labels()
@@ -122,3 +136,6 @@ def show_solution_progress(history: Sequence[tuple[float, float, float]]) -> Non
     ax.grid(alpha=0.3)
     fig.tight_layout()
     _save_and_show(fig, "solution_progress.png")
+    report = get_active_report()
+    if report is not None:
+        report.add_figure(fig)

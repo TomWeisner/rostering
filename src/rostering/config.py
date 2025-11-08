@@ -26,6 +26,12 @@ class Config:
     # Rest
     REST_HOURS: int = 12  # set 0 to diagnose without rest
 
+    # Shift availability windows
+    NIGHT_SHIFT_START: int = 18
+    NIGHT_SHIFT_END: int = 6
+    NIGHT_TO_DAY_SLACK_HOURS: int = 2
+    DAY_TO_NIGHT_SLACK_HOURS: int = 1
+
     # Skills requiring certain coverage minimums (or maximums)
     SKILL_MIN: Optional[SkillGrid] = None
     SKILL_MAX: Optional[SkillGrid] = None
@@ -48,7 +54,7 @@ class Config:
     ### SOLVER SETUP ###
 
     # Solver
-    TIME_LIMIT_SEC: float = 60.0
+    TIME_LIMIT_SEC: float = 30.0
     NUM_PARALLEL_WORKERS: int = 1
     LOG_SOLUTIONS_FREQUENCY_SECONDS: float = 5.0
 
@@ -60,6 +66,10 @@ class Config:
 
     # RANDOM SEED
     SEED: Optional[int] = None
+
+    # Default coverage requirements (used when SKILL_MIN is empty)
+    DEFAULT_MIN_STAFF: int = 2
+    DEFAULT_MIN_SKILL_NAME: str = "ANY"
 
     def validate(self):
         """
@@ -80,6 +90,20 @@ class Config:
             raise ValueError("TIME_LIMIT_SEC must be > 0.")
         if self.NUM_PARALLEL_WORKERS <= 0:
             raise ValueError("NUM_PARALLEL_WORKERS must be > 0.")
+        for attr in ("NIGHT_SHIFT_START", "NIGHT_SHIFT_END"):
+            val = getattr(self, attr)
+            if not (0 <= val <= 23):
+                raise ValueError(f"{attr} must be within [0, 23].")
+        for attr in ("NIGHT_TO_DAY_SLACK_HOURS", "DAY_TO_NIGHT_SLACK_HOURS"):
+            if getattr(self, attr) < 0:
+                raise ValueError(f"{attr} must be non-negative.")
+
+    def ensure_skill_grids(self) -> None:
+        """
+        Ensure SKILL_MIN/SKILL_MAX grids exist and optionally seed default coverage.
+        """
+        _ensure_grids(self)
+        _apply_default_skill_requirements(self)
 
 
 def _ensure_grids(C: Config) -> None:
@@ -87,6 +111,25 @@ def _ensure_grids(C: Config) -> None:
         C.SKILL_MIN = [[{} for _ in range(C.HOURS)] for _ in range(C.DAYS)]
     if getattr(C, "SKILL_MAX", None) is None:
         C.SKILL_MAX = [[{} for _ in range(C.HOURS)] for _ in range(C.DAYS)]
+
+
+def _apply_default_skill_requirements(C: Config) -> None:
+    """
+    Seed DEFAULT_MIN_STAFF requirement if grid is empty and default > 0.
+    """
+    if C.DEFAULT_MIN_STAFF <= 0:
+        return
+
+    min_grid: SkillGrid = cast(SkillGrid, C.SKILL_MIN)
+    has_existing = any(
+        cell for row in min_grid for cell in row if isinstance(cell, dict) and cell
+    )
+    if has_existing:
+        return
+
+    for d in range(C.DAYS):
+        for h in range(C.HOURS):
+            min_grid[d][h][C.DEFAULT_MIN_SKILL_NAME] = C.DEFAULT_MIN_STAFF
 
 
 def require_skill_everywhere(

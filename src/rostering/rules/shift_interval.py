@@ -20,7 +20,7 @@ class ShiftIntervalRule(Rule):
     cfg.DAYS     : planning horizon (days)
     cfg.HOURS    : hours per day (e.g., 24)
     data.allowed[e][h] : hour availability mask for employee e (True if allowed)
-    data.staff[e].holidays : set of day indices e must not work
+    data.staff[e].holidays : set[datetime.date] that employee e must not work
 
     Variables (provided by the model)
     ---------------------------------
@@ -69,9 +69,13 @@ class ShiftIntervalRule(Rule):
     def add_hard(self):
         C, D, m = self.model.cfg, self.model.data, self.model.m
 
+        base_date = C.START_DATE.date()
         for e in range(C.N):
             allowed_mask = D.allowed[e]
-            forbidden_days = set(D.staff[e].holidays)
+            forbidden_days = {
+                _day_index_from_any(day, base_date)
+                for day in getattr(D.staff[e], "holidays", set())
+            }
 
             for d in range(C.DAYS):
                 for h in range(C.HOURS):
@@ -154,3 +158,16 @@ class ShiftIntervalRule(Rule):
                 m.Add(total >= 1).OnlyEnforceIf(self.model.z[(e, d)])
                 # If z=0 then no hour may be worked.
                 m.Add(total == 0).OnlyEnforceIf(self.model.z[(e, d)].Not())
+
+
+def _day_index_from_any(value, base_date):
+    from datetime import date as _date
+    from datetime import datetime as _datetime
+
+    if isinstance(value, int):
+        return value
+    if isinstance(value, _datetime):
+        value = value.date()
+    if isinstance(value, _date):
+        return int((value - base_date).days)
+    raise TypeError("Holiday entries must be ints or datetime/date objects.")

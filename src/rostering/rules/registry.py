@@ -7,6 +7,7 @@ from rostering.rules.base import BuildCtxProto, Rule
 from rostering.rules.coverage import CoverageRule
 from rostering.rules.decision_variables import VariablesRule
 from rostering.rules.fairness import FairnessRule
+from rostering.rules.max_consecutive_days import MaxConsecutiveDaysRule
 from rostering.rules.min_length_shift import MinRealizedLengthRule
 from rostering.rules.rest import RestRule
 from rostering.rules.run_penalty import RunPenaltyRule
@@ -47,9 +48,10 @@ RULE_REGISTRY = RuleRegistry()
 RULE_REGISTRY.register(VariablesRule, order=0)
 RULE_REGISTRY.register(AvailabilityRule, order=10)
 RULE_REGISTRY.register(ShiftIntervalRule, order=20)
-RULE_REGISTRY.register(MinRealizedLengthRule, order=30)
-RULE_REGISTRY.register(RestRule, order=40)
-RULE_REGISTRY.register(CoverageRule, order=50)
-RULE_REGISTRY.register(WeeklyCapRule, order=60)
-RULE_REGISTRY.register(RunPenaltyRule, order=70)
-RULE_REGISTRY.register(FairnessRule, order=80)
+RULE_REGISTRY.register(MaxConsecutiveDaysRule, order=30)
+RULE_REGISTRY.register(MinRealizedLengthRule, order=40)
+RULE_REGISTRY.register(RestRule, order=50)
+RULE_REGISTRY.register(CoverageRule, order=60)
+RULE_REGISTRY.register(WeeklyCapRule, order=70)
+RULE_REGISTRY.register(RunPenaltyRule, order=80)
+RULE_REGISTRY.register(FairnessRule, order=90)

@@ -16,6 +16,7 @@ class BuildCtxProto(Protocol):
     cfg: Config
     data: InputData
     x: dict[tuple[int, int, int], cp_model.IntVar]
+    runlen: dict[tuple[int, int], cp_model.IntVar]
 
     def add_assumption(self, label: str) -> cp_model.IntVar: ...
 

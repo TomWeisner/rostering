@@ -65,8 +65,8 @@ def test_progress_callback_is_called(solver, callback, mock_print):
     # Optional: verify a sane log format without overfitting on exact numbers
     args, _ = mock_print.call_args  # last call
     line = args[0] if args else ""
-    # Example expected fields: "[  0.1s] pct=.. | best=.. | ratio=.. | sols=.."
-    assert "pct=" in line
+    # Example expected fields: "[  0.1s] pct of time limit=.. | best=.. | ratio=.. | sols=.."
+    assert "pct of time limit=" in line
     assert "best=" in line
     assert "ratio=" in line
     assert "sols=" in line

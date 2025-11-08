@@ -21,7 +21,7 @@ def make_cfg():
 def make_data():
     staff = [SimpleNamespace(skills={"A"}, holidays=set())]
     allowed = [[True] * 24]
-    return InputData(staff=staff, allowed=allowed, is_weekend=[False])
+    return InputData(staff=staff, allowed=allowed)
 
 
 def make_result(status: str = "FEASIBLE"):

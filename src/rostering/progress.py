@@ -47,7 +47,7 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
 
             if abs(bound) > 1e-9:
                 ratio_val = abs(best) / max(1e-9, abs(bound))
-                ratio_str = f"{ratio_val:.3f}"
+                ratio_str = f"{ratio_val:,.2f}"
             else:
                 ratio_str = "n/a"
             self._ratio_field_width = max(self._ratio_field_width, len(ratio_str))
@@ -59,7 +59,7 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
             else:
                 pct_field = "  n/a "
             print(
-                f"[{now:6.1f}s] pct={pct_field} | best={best_field} | ratio={ratio_field} | sols={self.sols:<5.0f}",
+                f"[{now:6.1f}s] pct of time limit={pct_field} | best={best_field} | ratio={ratio_field} | sols={self.sols:<5.0f}",
                 flush=True,
             )
             self.last_time = now

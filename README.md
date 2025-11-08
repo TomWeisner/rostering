@@ -55,6 +55,39 @@ poetry source add --priority explicit testpypi https://test.pypi.org/simple/
 poetry add --source testpypi rostering
 ```
 
+#### . Run the optimiser with installed package
+
+```python
+from datetime import datetime
+
+from rostering import Config, InputData, run_solver
+
+# Build or load the configuration you want to optimise
+cfg = Config(
+    N=32,
+    DAYS=7,
+    START_DATE=datetime(2024, 3, 4),
+    MIN_SHIFT_HOURS=4,
+    MAX_SHIFT_HOURS=12,
+    REST_HOURS=12,
+)
+
+# Option 1: let the package generate synthetic input data (default behaviour)
+result = run_solver(cfg)
+
+# Option 2: pass your own InputData (e.g., from an ETL pipeline)
+my_data = InputData(
+    staff=[...],
+    allowed=[...],
+    is_weekend=[...],
+)
+custom_result = run_solver(cfg, data=my_data)
+```
+
+By default `Config.DEFAULT_MIN_STAFF = 2`, so any new `Config` will request at least
+two `"ANY"` staff each hour. Set `DEFAULT_MIN_STAFF = 0` if you intentionally want a
+zero-demand scenario.
+
 ### 2. Clone the repo for local development
 
 ```bash
@@ -66,7 +99,7 @@ source .venv/bin/activate
 poetry run pre-commit install
 ```
 
-### 3. Run the optimiser
+#### . Run the optimiser
 
 ```bash
 poetry run python -m src.rostering.main
@@ -107,9 +140,9 @@ Key rule highlights:
 
 1. **Progress callback** – every `LOG_SOLUTIONS_FREQUENCY_SECONDS`:
    ```text
-   [  3.0s] pct= 20.00% | best=12,345 | ratio=1.050 | sols=3
+   [  3.0s] pct of time limit= 20.00% | best=12,345 | ratio=1.050 | sols=3
    ```
-   - `pct` = elapsed time vs. limit
+   - `pct of time limit` = elapsed time vs. limit
    - `best` = best objective found so far (penalty total)
    - `ratio` = |best| / |solver bound| (closer to 1 → proven optimal)
    - `sols` = solution count
@@ -194,6 +227,7 @@ Once satisfied, bump the real PyPI release separately (outside this repo’s aut
 | Build/solve orchestration | `src/rostering/model.py` |
 | Constraint rules | `src/rostering/rules/` |
 | Progress callback | `src/rostering/progress.py` |
+| Programmatic entry point | `rostering.run_solver` |
 | Reporting | `src/rostering/reporting/` |
 
 Happy rostering! 🗓️

@@ -55,13 +55,13 @@ def make_input(staff_skills: list[set[str]]) -> InputData:
                 band=1,
                 skills=list(skills) if skills else ["ANY"],
                 is_night_worker=False,
-                consec_cap=None,
+                max_consec_days=None,
                 holidays=set(),
-                pref_off=set(),
+                preferred_off=set(),
             )
         )
     allowed = [[True] * 24 for _ in staff_objs]
-    return InputData(staff=staff_objs, allowed=allowed, is_weekend=[False])
+    return InputData(staff=staff_objs, allowed=allowed)
 
 
 def test_slot_requirements_builds_expected_grid():
@@ -108,7 +108,7 @@ def test_compute_slot_gaps_marks_unattainable_slots():
     # Only one staff member available, so slot is unattainable
     staff = [SimpleNamespace(skills={"A"}, holidays=set())]
     allowed = [[True]]
-    data = InputData(staff=staff, allowed=allowed, is_weekend=[False])
+    data = InputData(staff=staff, allowed=allowed)
     top, df = metrics.compute_slot_gaps(cfg, None, data, adapter, top=1)
 
     assert top[0].unattainable is True

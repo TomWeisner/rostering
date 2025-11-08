@@ -45,7 +45,7 @@ def make_cfg():
 def make_data():
     staff = [SimpleNamespace(skills={"A"}, holidays=set())]
     allowed = [[True] * 24]
-    return InputData(staff=staff, allowed=allowed, is_weekend=[False])
+    return InputData(staff=staff, allowed=allowed)
 
 
 def test_hour_of_day_histogram_saves(monkeypatch):

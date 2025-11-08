@@ -19,6 +19,24 @@ def setup_solver(cfg: Config) -> cp_model.CpSolver:
     return solver
 
 
+def _extract_unsat_groups(
+    solver: cp_model.CpSolver, ctx: BuildContext
+) -> dict[str, list[str]]:
+    try:
+        core = solver.SufficientAssumptionsForInfeasibility()
+    except Exception:
+        core = []
+    if not core:
+        return {}
+
+    labels = ctx.core_labels(core)
+    grouped = defaultdict(list)
+    for lab in labels:
+        key = lab.split("[", 1)[0]
+        grouped[key].append(lab)
+    return dict(grouped)
+
+
 def solve_model(
     ctx: BuildContext, progress_cb=None
 ) -> Tuple[cp_model.CpSolver, str, dict[str, list[str]]]:
@@ -26,25 +44,27 @@ def solve_model(
     Run the solver. If infeasible and UNSAT core is enabled, return grouped core.
     Returns: (solver, status_name, unsat_core_groups)
     """
-    solver = setup_solver(ctx.cfg)
-    status = (
-        solver.SolveWithSolutionCallback(ctx.m, progress_cb)
-        if progress_cb
-        else solver.Solve(ctx.m)
-    )
+
+    def _solve(use_callback: bool) -> tuple[cp_model.CpSolver, int]:
+        solver = setup_solver(ctx.cfg)
+        status = (
+            solver.SolveWithSolutionCallback(ctx.m, progress_cb)
+            if use_callback and progress_cb is not None
+            else solver.Solve(ctx.m)
+        )
+        return solver, status
+
+    solver, status = _solve(use_callback=True)
     status_name = solver.StatusName(status)
 
     groups: dict[str, list[str]] = {}
     if status == cp_model.INFEASIBLE and ctx.cfg.ENABLE_UNSAT_CORE:
-        try:
-            core = solver.SufficientAssumptionsForInfeasibility()
-        except Exception:
-            core = []
-        if core:
-            labels = ctx.core_labels(core)
-            grouped = defaultdict(list)
-            for lab in labels:
-                key = lab.split("[", 1)[0]
-                grouped[key].append(lab)
-            groups = dict(grouped)
+        groups = _extract_unsat_groups(solver, ctx)
+        if not groups and progress_cb is not None:
+            # Re-run without callback; CP-SAT only produces cores when no callback is used.
+            solver, status = _solve(use_callback=False)
+            status_name = solver.StatusName(status)
+            if status == cp_model.INFEASIBLE:
+                groups = _extract_unsat_groups(solver, ctx)
+
     return solver, status_name, groups

@@ -1,0 +1,788 @@
+[
+  {
+    "id": 0,
+    "name": "Staff 0",
+    "band": 2,
+    "skills": [
+      "B"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 4,
+    "holidays": [
+      "2024-01-13"
+    ],
+    "preferred_off": [
+      "2024-01-01"
+    ]
+  },
+  {
+    "id": 1,
+    "name": "Staff 1",
+    "band": 1,
+    "skills": [
+      "A"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-06"
+    ],
+    "preferred_off": [
+      "2024-01-04",
+      "2024-01-09"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Staff 2",
+    "band": 3,
+    "skills": [
+      "A",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-02"
+    ],
+    "preferred_off": [
+      "2024-01-02",
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Staff 3",
+    "band": 3,
+    "skills": [
+      "B"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-08",
+      "2024-01-08"
+    ],
+    "preferred_off": [
+      "2024-01-01",
+      "2024-01-05"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Staff 4",
+    "band": 3,
+    "skills": [
+      "A",
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-08",
+      "2024-01-14"
+    ],
+    "preferred_off": [
+      "2024-01-04"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Staff 5",
+    "band": 3,
+    "skills": [
+      "A",
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 5,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 6,
+    "name": "Staff 6",
+    "band": 2,
+    "skills": [
+      "A"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-09"
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Staff 7",
+    "band": 1,
+    "skills": [
+      "B"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-09",
+      "2024-01-10"
+    ],
+    "preferred_off": [
+      "2024-01-08"
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Staff 8",
+    "band": 1,
+    "skills": [
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 9,
+    "name": "Staff 9",
+    "band": 1,
+    "skills": [
+      "A"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 10,
+    "name": "Staff 10",
+    "band": 3,
+    "skills": [
+      "A"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [
+      "2024-01-04",
+      "2024-01-13"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 11,
+    "name": "Staff 11",
+    "band": 2,
+    "skills": [
+      "B"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-11",
+      "2024-01-12"
+    ],
+    "preferred_off": [
+      "2024-01-02"
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Staff 12",
+    "band": 3,
+    "skills": [
+      "A",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 13,
+    "name": "Staff 13",
+    "band": 1,
+    "skills": [
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-14"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 14,
+    "name": "Staff 14",
+    "band": 3,
+    "skills": [
+      "A",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 15,
+    "name": "Staff 15",
+    "band": 3,
+    "skills": [
+      "A",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 16,
+    "name": "Staff 16",
+    "band": 3,
+    "skills": [
+      "A",
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-01",
+      "2024-01-13"
+    ]
+  },
+  {
+    "id": 17,
+    "name": "Staff 17",
+    "band": 3,
+    "skills": [
+      "A",
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 18,
+    "name": "Staff 18",
+    "band": 2,
+    "skills": [
+      "A"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-02",
+      "2024-01-12"
+    ],
+    "preferred_off": [
+      "2024-01-04"
+    ]
+  },
+  {
+    "id": 19,
+    "name": "Staff 19",
+    "band": 3,
+    "skills": [
+      "A",
+      "B"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [
+      "2024-01-04",
+      "2024-01-11"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 20,
+    "name": "Staff 20",
+    "band": 2,
+    "skills": [
+      "A"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 4,
+    "holidays": [
+      "2024-01-01",
+      "2024-01-03"
+    ],
+    "preferred_off": [
+      "2024-01-11"
+    ]
+  },
+  {
+    "id": 21,
+    "name": "Staff 21",
+    "band": 3,
+    "skills": [
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-14"
+    ],
+    "preferred_off": [
+      "2024-01-03",
+      "2024-01-05"
+    ]
+  },
+  {
+    "id": 22,
+    "name": "Staff 22",
+    "band": 2,
+    "skills": [
+      "A",
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-03",
+      "2024-01-05"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 23,
+    "name": "Staff 23",
+    "band": 3,
+    "skills": [
+      "A"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-05",
+      "2024-01-07"
+    ],
+    "preferred_off": [
+      "2024-01-07",
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 24,
+    "name": "Staff 24",
+    "band": 3,
+    "skills": [
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-07",
+      "2024-01-08"
+    ]
+  },
+  {
+    "id": 25,
+    "name": "Staff 25",
+    "band": 2,
+    "skills": [
+      "A",
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 5,
+    "holidays": [
+      "2024-01-01",
+      "2024-01-12"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 26,
+    "name": "Staff 26",
+    "band": 1,
+    "skills": [
+      "A",
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 5,
+    "holidays": [
+      "2024-01-10",
+      "2024-01-13"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 27,
+    "name": "Staff 27",
+    "band": 3,
+    "skills": [
+      "A",
+      "B"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-02",
+      "2024-01-11"
+    ]
+  },
+  {
+    "id": 28,
+    "name": "Staff 28",
+    "band": 1,
+    "skills": [
+      "B"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 29,
+    "name": "Staff 29",
+    "band": 3,
+    "skills": [
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 30,
+    "name": "Staff 30",
+    "band": 2,
+    "skills": [
+      "B"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 31,
+    "name": "Staff 31",
+    "band": 3,
+    "skills": [
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-03"
+    ],
+    "preferred_off": [
+      "2024-01-09",
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 32,
+    "name": "Staff 32",
+    "band": 1,
+    "skills": [
+      "A"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 33,
+    "name": "Staff 33",
+    "band": 3,
+    "skills": [
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-10",
+      "2024-01-12"
+    ],
+    "preferred_off": [
+      "2024-01-08",
+      "2024-01-12"
+    ]
+  },
+  {
+    "id": 34,
+    "name": "Staff 34",
+    "band": 2,
+    "skills": [
+      "A",
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-10"
+    ]
+  },
+  {
+    "id": 35,
+    "name": "Staff 35",
+    "band": 2,
+    "skills": [
+      "A",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-02",
+      "2024-01-06"
+    ],
+    "preferred_off": [
+      "2024-01-01",
+      "2024-01-01"
+    ]
+  },
+  {
+    "id": 36,
+    "name": "Staff 36",
+    "band": 1,
+    "skills": [
+      "B"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-02"
+    ],
+    "preferred_off": [
+      "2024-01-12"
+    ]
+  },
+  {
+    "id": 37,
+    "name": "Staff 37",
+    "band": 2,
+    "skills": [
+      "A",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [
+      "2024-01-07"
+    ],
+    "preferred_off": [
+      "2024-01-05"
+    ]
+  },
+  {
+    "id": 38,
+    "name": "Staff 38",
+    "band": 3,
+    "skills": [
+      "A",
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-02"
+    ]
+  },
+  {
+    "id": 39,
+    "name": "Staff 39",
+    "band": 3,
+    "skills": [
+      "A",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-07",
+      "2024-01-10"
+    ]
+  },
+  {
+    "id": 40,
+    "name": "Staff 40",
+    "band": 2,
+    "skills": [
+      "B"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-01"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 41,
+    "name": "Staff 41",
+    "band": 2,
+    "skills": [
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-02"
+    ],
+    "preferred_off": [
+      "2024-01-04"
+    ]
+  },
+  {
+    "id": 42,
+    "name": "Staff 42",
+    "band": 3,
+    "skills": [
+      "A",
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-01",
+      "2024-01-09"
+    ],
+    "preferred_off": [
+      "2024-01-13"
+    ]
+  },
+  {
+    "id": 43,
+    "name": "Staff 43",
+    "band": 1,
+    "skills": [
+      "A",
+      "B"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-02",
+      "2024-01-03"
+    ]
+  },
+  {
+    "id": 44,
+    "name": "Staff 44",
+    "band": 3,
+    "skills": [
+      "A"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-07",
+      "2024-01-11"
+    ]
+  },
+  {
+    "id": 45,
+    "name": "Staff 45",
+    "band": 1,
+    "skills": [
+      "SENIOR"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 4,
+    "holidays": [
+      "2024-01-08"
+    ],
+    "preferred_off": [
+      "2024-01-11",
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 46,
+    "name": "Staff 46",
+    "band": 2,
+    "skills": [
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [
+      "2024-01-01"
+    ],
+    "preferred_off": [
+      "2024-01-03",
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 47,
+    "name": "Staff 47",
+    "band": 3,
+    "skills": [
+      "B",
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 48,
+    "name": "Staff 48",
+    "band": 1,
+    "skills": [
+      "SENIOR"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-06"
+    ]
+  },
+  {
+    "id": 49,
+    "name": "Staff 49",
+    "band": 3,
+    "skills": [
+      "A"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-01",
+      "2024-01-09"
+    ],
+    "preferred_off": [
+      "2024-01-02",
+      "2024-01-11"
+    ]
+  }
+]

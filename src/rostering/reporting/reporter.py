@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from typing import Any
 
 from rostering.input_data import InputData
 
 from .adapters import PandasResultAdapter, ResultAdapter
 from .plots import show_hour_of_day_histograms, show_solution_progress
-from .text_report import render_text_report
+from .text_report import ReportDocument, render_text_report, set_active_report
 
 
 class Reporter:
@@ -60,18 +61,28 @@ class Reporter:
 
     def post_solve(self, res: object, data: object) -> None:
         """Render textual report (and optional plots) after solving."""
-        self.render_text_report(res, data)
-        if isinstance(data, InputData):
-            show_hour_of_day_histograms(
-                self.cfg,
-                res,
-                data,
-                self.adapter,
-                enable_plot=self.enable_plots,
-            )
-        history = getattr(res, "progress_history", None)
-        if self.enable_plots and history:
-            show_solution_progress(history)
+        status = self.adapter.status_name(res)
+        if status == "INFEASIBLE":
+            return
+
+        report_doc = ReportDocument(Path("outputs/report.pdf"))
+        set_active_report(report_doc)
+        try:
+            self.render_text_report(res, data)
+            if isinstance(data, InputData):
+                show_hour_of_day_histograms(
+                    self.cfg,
+                    res,
+                    data,
+                    self.adapter,
+                    enable_plot=self.enable_plots,
+                )
+            history = getattr(res, "progress_history", None)
+            if self.enable_plots and history:
+                show_solution_progress(history)
+        finally:
+            set_active_report(None)
+            report_doc.write()
 
     # ---------- helpers ----------
 

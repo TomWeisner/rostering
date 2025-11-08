@@ -21,13 +21,13 @@ def make_cfg():
 
 
 def make_result():
-    return SimpleNamespace(progress_history=[(0.0, 10.0, 8.0)])
+    return SimpleNamespace(status_name="FEASIBLE", progress_history=[(0.0, 10.0, 8.0)])
 
 
 def make_input():
     staff = [SimpleNamespace(skills=set(), holidays=set())]
     allowed = [[True] * 24]
-    return InputData(staff=staff, allowed=allowed, is_weekend=[False])
+    return InputData(staff=staff, allowed=allowed)
 
 
 def test_pre_solve_skips_when_no_precheck(capfd):
@@ -47,6 +47,9 @@ def test_pre_solve_prompts_when_infeasible(monkeypatch):
 def test_post_solve_triggers_render_and_plots(monkeypatch):
     reporter = Reporter(make_cfg(), enable_plots=True)
     calls = []
+    monkeypatch.setattr(
+        "rostering.reporting.reporter.ReportDocument.write", lambda self: None
+    )
 
     def fake_render(cfg, adapter, res, data, num_print_examples=6):
         calls.append("render")
@@ -73,8 +76,34 @@ def test_post_solve_skips_plots_when_disabled(monkeypatch):
     reporter = Reporter(make_cfg(), enable_plots=False)
     called = []
     monkeypatch.setattr(
+        "rostering.reporting.reporter.ReportDocument.write", lambda self: None
+    )
+    monkeypatch.setattr(
         "rostering.reporting.reporter.render_text_report",
         lambda *a, **k: called.append("render"),
     )
     reporter.post_solve(SimpleNamespace(progress_history=[(0, 1, 1)]), object())
     assert called == ["render"]
+
+
+def test_post_solve_skips_everything_when_infeasible(monkeypatch):
+    reporter = Reporter(make_cfg(), enable_plots=True)
+    called = []
+    monkeypatch.setattr(
+        "rostering.reporting.reporter.ReportDocument.write", lambda self: None
+    )
+    monkeypatch.setattr(
+        "rostering.reporting.reporter.render_text_report",
+        lambda *a, **k: called.append("render"),
+    )
+    monkeypatch.setattr(
+        "rostering.reporting.reporter.show_hour_of_day_histograms",
+        lambda *a, **k: called.append("hourly"),
+    )
+    monkeypatch.setattr(
+        "rostering.reporting.reporter.show_solution_progress",
+        lambda *a, **k: called.append("progress"),
+    )
+
+    reporter.post_solve(SimpleNamespace(status_name="INFEASIBLE"), make_input())
+    assert called == []

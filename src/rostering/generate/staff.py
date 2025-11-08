@@ -1,14 +1,21 @@
 # staff_generation.py
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
-from typing import Optional, Tuple
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import Any, Iterable, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
 
+from rostering.config import Config
+
 # If you store a large list of first names in another module:
 from rostering.generate.staff_names import FIRST_NAMES
+
+DEFAULT_STAFF_JSON = Path(__file__).resolve().parents[2] / "example_staff.json"
 
 
 # ----------------------------
@@ -51,12 +58,6 @@ class StaffGenConfig:
         0.15  # per-person, per-day prob of soft preference for being off
     )
 
-    # Times of day edges for shifts
-    night_start: int = 18  # inclusive
-    night_end: int = 6  # exclusive in wrap sense (0..6)
-    night_into_day_slack: int = 2  # night workers can extend 2h into day period
-    day_into_night_slack: int = 1  # day workers can extend 1h into night period
-
     # RNG seed
     seed: Optional[int] = 7
 
@@ -85,11 +86,6 @@ class StaffGenConfig:
         for x in (self.holiday_rate, self.pref_off_rate):
             if not (0.0 <= x <= 1.0):
                 raise ValueError("holiday_rate and pref_off_rate must be in [0,1].")
-        for v in (self.night_start, self.night_end):
-            if not (0 <= v <= 23):
-                raise ValueError("night_start/night_end must be in [0..23].")
-        if self.night_into_day_slack < 0 or self.day_into_night_slack < 0:
-            raise ValueError("Slack values must be non-negative.")
         if self.seed is not None and not isinstance(self.seed, int):
             raise ValueError("seed must be an int or None.")
 
@@ -108,19 +104,26 @@ class Staff:
     band: int
     skills: list[str]
     is_night_worker: bool
-    consec_cap: Optional[int]
-    holidays: set[int] = field(default_factory=set)
-    pref_off: set[int] = field(default_factory=set)
+    max_consec_days: Optional[int]
+    holidays: set[date] = field(default_factory=set)
+    preferred_off: set[date] = field(default_factory=set)
 
     def __repr__(self) -> str:
-        cap = f"cap={self.consec_cap}" if self.consec_cap is not None else "cap=∞"
+        cap = (
+            f"cap={self.max_consec_days}"
+            if self.max_consec_days is not None
+            else "cap=∞"
+        )
         return (
             f"Staff(id={self.id}, name='{self.name}', band={self.band}, "
             f"skills={self.skills}, night={self.is_night_worker}, {cap}, "
-            f"hol={sorted(self.holidays)}, pref={sorted(self.pref_off)})"
+            f"hol={[d.isoformat() for d in sorted(self.holidays)]}, "
+            f"pref={[d.isoformat() for d in sorted(self.preferred_off)]})"
         )
 
     def __post_init__(self) -> None:
+        self.holidays = _normalize_date_set(self.holidays)
+        self.preferred_off = _normalize_date_set(self.preferred_off)
         # Ensure "ANY" is present exactly once.
         if "ANY" not in self.skills:
             self.skills.append("ANY")
@@ -155,6 +158,20 @@ def _deterministic_counts(n: int, probs: np.ndarray) -> np.ndarray:
     return floors
 
 
+def _normalize_date_set(values: Iterable[Any]) -> set[date]:
+    out: set[date] = set()
+    for val in values:
+        if isinstance(val, date) and not isinstance(val, datetime):
+            out.add(val)
+        elif isinstance(val, datetime):
+            out.add(val.date())
+        else:
+            raise TypeError(
+                "Holidays/preferred_off entries must be datetime.date or datetime.datetime."
+            )
+    return out
+
+
 # ----------------------------
 # Core API
 # ----------------------------
@@ -186,7 +203,7 @@ def create_staff(cfg: StaffGenConfig) -> list[Staff]:
         pA, pB = cfg.skill_probs[b]
         hasA = bool(g.random() < pA)
         hasB = bool(g.random() < pB)
-        consec_cap = int(cap_draws[i]) if capped_flags[i] else None
+        max_consec_days = int(cap_draws[i]) if capped_flags[i] else None
 
         skills: list[str] = []
         if hasA:
@@ -204,7 +221,7 @@ def create_staff(cfg: StaffGenConfig) -> list[Staff]:
                 band=b,
                 skills=skills,
                 is_night_worker=bool(night_flags[i]),
-                consec_cap=consec_cap,
+                max_consec_days=max_consec_days,
             )
         )
     return staff
@@ -215,10 +232,11 @@ def assign_time_off(
     days: int,
     holiday_rate: float,
     pref_off_rate: float,
+    start_date: date,
     seed: Optional[int] = 7,
 ) -> None:
     """
-    Randomly assign holidays and preferred days off to a staff roster.
+    Randomly assign holidays and preferred days off (as datetime.date objects).
     """
     if days <= 0:
         raise ValueError("days must be > 0")
@@ -226,11 +244,13 @@ def assign_time_off(
         raise ValueError("holiday_rate and pref_off_rate must be in [0,1].")
     g = _rng(seed)
     for s in staff:
-        hol = set(np.where(g.random(days) < holiday_rate)[0])
-        pref = set(np.where(g.random(days) < pref_off_rate)[0])
+        hol_idx = np.where(g.random(days) < holiday_rate)[0]
+        pref_idx = np.where(g.random(days) < pref_off_rate)[0]
+        hol = {start_date + timedelta(days=int(i)) for i in hol_idx}
+        pref = {start_date + timedelta(days=int(i)) for i in pref_idx}
         # soft prefs cannot overlap hard holidays
         s.holidays = hol
-        s.pref_off = pref - hol
+        s.preferred_off = pref - hol
 
 
 def allowed_hours_for_staff(
@@ -278,17 +298,22 @@ def allowed_hours_for_staff(
 # ----------------------------
 # Convenience utilities
 # ----------------------------
-def build_allowed_matrix(staff: list[Staff], cfg: StaffGenConfig) -> np.ndarray:
-    """Return (N, 24) boolean numpy array (dtype=bool)."""
+def build_allowed_matrix(staff: list[Staff], cfg: Config) -> np.ndarray:
+    """Return (N, 24) boolean numpy array (dtype=bool) based on Config availability settings."""
+    night_start = cfg.NIGHT_SHIFT_START
+    night_end = cfg.NIGHT_SHIFT_END
+    night_into_day_slack = cfg.NIGHT_TO_DAY_SLACK_HOURS
+    day_into_night_slack = cfg.DAY_TO_NIGHT_SLACK_HOURS
+
     mat = np.zeros((len(staff), 24), dtype=bool)
     for e, s in enumerate(staff):
         mat[e, :] = np.array(
             allowed_hours_for_staff(
                 s,
-                cfg.night_start,
-                cfg.night_end,
-                cfg.night_into_day_slack,
-                cfg.day_into_night_slack,
+                night_start,
+                night_end,
+                night_into_day_slack,
+                day_into_night_slack,
             ),
             dtype=bool,
         )
@@ -304,7 +329,7 @@ def staff_summary(staff: list[Staff]) -> dict:
     B = sum("B" in s.skills for s in staff)
     SENIOR = sum("SENIOR" in s.skills for s in staff)
     night = sum(s.is_night_worker for s in staff)
-    capped = sum(s.consec_cap is not None for s in staff)
+    capped = sum(s.max_consec_days is not None for s in staff)
     return {
         "N": n,
         "bands": bands,
@@ -328,10 +353,117 @@ def staff_to_dataframe(staff: list[Staff]) -> pd.DataFrame:
                 "skillB": "B" in s.skills,
                 "senior": "SENIOR" in s.skills,
                 "is_night_worker": bool(s.is_night_worker),
-                "consec_cap": s.consec_cap if s.consec_cap is not None else np.nan,
-                "holidays": sorted(s.holidays),
-                "pref_off": sorted(s.pref_off),
+                "max_consec_days": (
+                    s.max_consec_days if s.max_consec_days is not None else np.nan
+                ),
+                "holidays": sorted(d.isoformat() for d in s.holidays),
+                "preferred_off": sorted(d.isoformat() for d in s.preferred_off),
                 "skills": s.skills[:],  # for debugging/inspection
             }
         )
     return pd.DataFrame(rows)
+
+
+def staff_from_json(path: str | Path | None = None) -> list[Staff]:
+    """
+    Load staff definitions from a JSON file on disk.
+
+    If `path` is omitted, the loader reads from `src/example_staff.json`. Files
+    may contain either a list of staff objects or an object with a top-level
+    `staff`/`employees` array.
+    """
+
+    file_path = Path(path) if path is not None else DEFAULT_STAFF_JSON
+    file_path = file_path.expanduser()
+
+    if file_path.suffix.lower() != ".json":
+        raise ValueError("staff_from_json expects a path to a .json file.")
+    if not file_path.exists():
+        raise FileNotFoundError(f"Staff JSON file not found: {file_path}")
+
+    try:
+        data = json.loads(file_path.read_text())
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON in {file_path}") from exc
+
+    if isinstance(data, Mapping):
+        staff_entries = data.get("staff") or data.get("employees")
+        if staff_entries is None:
+            raise ValueError(
+                "JSON file must contain a list or a 'staff'/'employees' key."
+            )
+    elif isinstance(data, Sequence):
+        staff_entries = data
+    else:
+        raise TypeError("JSON file must contain a list of staff objects.")
+
+    if isinstance(staff_entries, (str, bytes, bytearray)):
+        raise TypeError("JSON file must contain a list of staff objects.")
+
+    staff_list: list[Staff] = []
+    for raw in staff_entries:
+        if not isinstance(raw, Mapping):
+            raise TypeError("Each staff entry must be an object/dict.")
+
+        def _listify(value: Any) -> list[str]:
+            if value is None:
+                return []
+            if isinstance(value, str):
+                return [value]
+            return [str(v) for v in list(value)]
+
+        def _date_set(value: Any) -> set[date]:
+            if value is None:
+                return set()
+            out: set[date] = set()
+            for v in value:
+                if isinstance(v, date) and not isinstance(v, datetime):
+                    out.add(v)
+                elif isinstance(v, datetime):
+                    out.add(v.date())
+                elif isinstance(v, str):
+                    try:
+                        out.add(datetime.fromisoformat(v).date())
+                    except ValueError as exc:
+                        raise ValueError(
+                            f"Invalid date string '{v}' in {file_path}"
+                        ) from exc
+                else:
+                    raise TypeError(
+                        "Date entries must be ISO strings or date/datetime objects."
+                    )
+            return out
+
+        staff_id = _to_int(raw.get("id"), "id")
+        band = _to_int(raw.get("band", 1), "band")
+        max_consec_raw = raw.get("max_consec_days")
+        if max_consec_raw in (None, "", "null"):
+            max_consec = None
+        else:
+            max_consec = _to_int(max_consec_raw, "max_consec_days")
+
+        staff_list.append(
+            Staff(
+                id=staff_id,
+                name=str(raw.get("name", "")),
+                band=band,
+                skills=_listify(raw.get("skills", [])),
+                is_night_worker=bool(raw.get("is_night_worker", False)),
+                max_consec_days=max_consec,
+                holidays=_date_set(raw.get("holidays")),
+                preferred_off=_date_set(
+                    raw.get("pref_off") or raw.get("preferred_off")
+                ),
+            )
+        )
+
+    return staff_list
+
+
+def _to_int(value: Any, field: str) -> int:
+    if value is None:
+        raise ValueError(f"Staff entry missing '{field}'.")
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid integer for '{field}': {value!r}") from exc
