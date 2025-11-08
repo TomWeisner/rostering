@@ -133,6 +133,8 @@ def render_text_report(
     if status == "INFEASIBLE":
         _print_unsat_core(cfg, data, res)
         return
+    if status == "UNKNOWN":
+        _log_print("Solver ran out of time before proving feasibility/optimality.")
     if obj is None:
         _log_print("No trusted solution; exiting.")
         return

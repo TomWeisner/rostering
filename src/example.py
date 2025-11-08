@@ -1,4 +1,16 @@
-"""python3 -m src.example"""
+"""
+Module with example code for running the rostering solver.
+
+There are three ways to run the code:
+
+1. Run the code with default options. This will generate
+    synthetic staff data from the config and run the solver for these.
+2. Run the code with custom staff data defined via code.
+3. Run the code with custom staff data pre-defined in a JSON file.
+
+Usage via cli:
+    python3 -m src.example --option 1
+"""
 
 from __future__ import annotations
 
@@ -7,16 +19,17 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from rostering import Config, InputData, run_solver
+from rostering.main import MinimalProgress, Reporter, default_input_builder
 
 cfg = Config(
     N=32,
     DAYS=7,
-    HOURS=8,
+    HOURS=24,
     START_DATE=datetime(2024, 1, 1),
     MIN_SHIFT_HOURS=4,
     MAX_SHIFT_HOURS=12,
     REST_HOURS=12,
-    TIME_LIMIT_SEC=2.0,
+    TIME_LIMIT_SEC=10.0,
     NUM_PARALLEL_WORKERS=1,
     LOG_SOLUTIONS_FREQUENCY_SECONDS=5.0,
 )
@@ -37,11 +50,27 @@ def parse_args() -> argparse.Namespace:
 def run_option(option: int) -> None:
     print(f"Running example code with option {option}")
 
+    # Run the code with default options. This will generate
+    # synthetic staff data from the config and run the solver for these.
     if option == 1:
-        run_solver(cfg)
 
+        # The parameters below are defaults, with the exception of config,
+        # they can be ommitted i.e. the below is equivalent to:
+        # run_solver(cfg)
+        run_solver(
+            config=cfg,
+            validate_config=True,
+            input_builder=default_input_builder,
+            reporter=Reporter(cfg),
+            enable_reporting=True,
+            progress_cb=MinimalProgress(
+                cfg.TIME_LIMIT_SEC, cfg.LOG_SOLUTIONS_FREQUENCY_SECONDS
+            ),
+        )
+
+    # Run the code with custom staff data defined via code.
     elif option == 2:
-        from rostering.generate.staff import Staff, build_allowed_matrix
+        from rostering.generate.staff import Staff
 
         base = cfg.START_DATE.date()
 
@@ -66,16 +95,35 @@ def run_option(option: int) -> None:
             ),
         ]
 
-        allowed = build_allowed_matrix(staff, cfg).astype(bool).tolist()
-        run_solver(cfg, data=InputData(staff=staff, allowed=allowed))
+        run_solver(cfg, data=InputData(staff=staff, cfg=cfg))
 
+    # Run the code with custom staff data defined via JSON. Typical production use.
     elif option == 3:
-        from rostering.generate.staff import build_allowed_matrix, staff_from_json
+        from rostering.config import (
+            hours_between,
+            require_skill_everywhere,
+            require_skill_in_slots,
+        )
+        from rostering.generate.staff import staff_from_json
 
         staff = staff_from_json(Path("src/example_staff.json"))
         cfg.N = len(staff)
-        allowed = build_allowed_matrix(staff, cfg).astype(bool).tolist()
-        run_solver(cfg, data=InputData(staff=staff, allowed=allowed))
+        require_skill_everywhere(cfg, "Python", k=1)
+        require_skill_in_slots(
+            cfg,
+            "First Aid",
+            days=None,
+            hours=range(6, 18),
+            k=2,
+        )
+        require_skill_in_slots(
+            cfg,
+            "First Aid",
+            days=None,
+            hours=hours_between(18, 6),
+            k=1,
+        )
+        run_solver(cfg, data=InputData(staff=staff, cfg=cfg))
     else:
         raise SystemExit(f"Unknown option {option}")
 

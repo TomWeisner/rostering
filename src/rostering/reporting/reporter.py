@@ -62,7 +62,7 @@ class Reporter:
     def post_solve(self, res: object, data: object) -> None:
         """Render textual report (and optional plots) after solving."""
         status = self.adapter.status_name(res)
-        if status == "INFEASIBLE":
+        if status not in {"FEASIBLE", "OPTIMAL"}:
             return
 
         report_doc = ReportDocument(Path("outputs/report.pdf"))

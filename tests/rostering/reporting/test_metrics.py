@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from datetime import datetime
 from types import SimpleNamespace
 
 import pandas as pd
 
+from rostering.config import Config
 from rostering.generate.staff import Staff
 from rostering.input_data import InputData
 from rostering.reporting import data_models, metrics
@@ -45,6 +47,21 @@ def simple_cfg(skills: list[list[dict[str, int]]], hours: int) -> SimpleNamespac
     return SimpleNamespace(DAYS=len(normalized), HOURS=hours, SKILL_MIN=normalized)
 
 
+def _input_cfg(n: int) -> Config:
+    return Config(
+        N=n,
+        DAYS=1,
+        HOURS=24,
+        START_DATE=datetime(2024, 1, 1),
+        MIN_SHIFT_HOURS=1,
+        MAX_SHIFT_HOURS=1,
+        REST_HOURS=0,
+        TIME_LIMIT_SEC=1.0,
+        NUM_PARALLEL_WORKERS=1,
+        LOG_SOLUTIONS_FREQUENCY_SECONDS=1.0,
+    )
+
+
 def make_input(staff_skills: list[set[str]]) -> InputData:
     staff_objs = []
     for idx, skills in enumerate(staff_skills):
@@ -60,8 +77,8 @@ def make_input(staff_skills: list[set[str]]) -> InputData:
                 preferred_off=set(),
             )
         )
-    allowed = [[True] * 24 for _ in staff_objs]
-    return InputData(staff=staff_objs, allowed=allowed)
+    cfg = _input_cfg(len(staff_objs))
+    return InputData(staff=staff_objs, cfg=cfg)
 
 
 def test_slot_requirements_builds_expected_grid():
@@ -106,9 +123,20 @@ def test_compute_slot_gaps_marks_unattainable_slots():
         sched=pd.DataFrame({"employee_id": [0], "day": [0], "hour": [0]})
     )
     # Only one staff member available, so slot is unattainable
-    staff = [SimpleNamespace(skills={"A"}, holidays=set())]
-    allowed = [[True]]
-    data = InputData(staff=staff, allowed=allowed)
+    staff = [
+        Staff(
+            id=0,
+            name="Only",
+            band=1,
+            skills=["A"],
+            is_night_worker=False,
+            max_consec_days=None,
+            holidays=set(),
+            preferred_off=set(),
+        )
+    ]
+    cfg_data = _input_cfg(len(staff))
+    data = InputData(staff=staff, cfg=cfg_data)
     top, df = metrics.compute_slot_gaps(cfg, None, data, adapter, top=1)
 
     assert top[0].unattainable is True

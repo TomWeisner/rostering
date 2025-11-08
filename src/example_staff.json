@@ -4,7 +4,7 @@
     "name": "Staff 0",
     "band": 2,
     "skills": [
-      "B"
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": 4,
@@ -20,7 +20,8 @@
     "name": "Staff 1",
     "band": 1,
     "skills": [
-      "A"
+      "Python",
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": 3,
@@ -37,8 +38,8 @@
     "name": "Staff 2",
     "band": 3,
     "skills": [
-      "A",
-      "SENIOR"
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": 3,
@@ -54,9 +55,7 @@
     "id": 3,
     "name": "Staff 3",
     "band": 3,
-    "skills": [
-      "B"
-    ],
+    "skills": [],
     "is_night_worker": true,
     "max_consec_days": null,
     "holidays": [
@@ -73,8 +72,7 @@
     "name": "Staff 4",
     "band": 3,
     "skills": [
-      "A",
-      "SENIOR"
+      "Python"
     ],
     "is_night_worker": true,
     "max_consec_days": 3,
@@ -91,9 +89,7 @@
     "name": "Staff 5",
     "band": 3,
     "skills": [
-      "A",
-      "B",
-      "SENIOR"
+      "Python"
     ],
     "is_night_worker": true,
     "max_consec_days": 5,
@@ -105,7 +101,7 @@
     "name": "Staff 6",
     "band": 2,
     "skills": [
-      "A"
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": 3,
@@ -118,9 +114,7 @@
     "id": 7,
     "name": "Staff 7",
     "band": 1,
-    "skills": [
-      "B"
-    ],
+    "skills": [],
     "is_night_worker": false,
     "max_consec_days": 3,
     "holidays": [
@@ -136,7 +130,9 @@
     "name": "Staff 8",
     "band": 1,
     "skills": [
-      "SENIOR"
+      "Python",
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": 3,
@@ -147,9 +143,7 @@
     "id": 9,
     "name": "Staff 9",
     "band": 1,
-    "skills": [
-      "A"
-    ],
+    "skills": [],
     "is_night_worker": false,
     "max_consec_days": 4,
     "holidays": [],
@@ -160,7 +154,8 @@
     "name": "Staff 10",
     "band": 3,
     "skills": [
-      "A"
+      "Python",
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": 5,
@@ -175,7 +170,7 @@
     "name": "Staff 11",
     "band": 2,
     "skills": [
-      "B"
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": 3,
@@ -192,8 +187,7 @@
     "name": "Staff 12",
     "band": 3,
     "skills": [
-      "A",
-      "SENIOR"
+      "First Aid"
     ],
     "is_night_worker": false,
     "max_consec_days": 4,
@@ -205,7 +199,8 @@
     "name": "Staff 13",
     "band": 1,
     "skills": [
-      "SENIOR"
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": null,
@@ -219,8 +214,8 @@
     "name": "Staff 14",
     "band": 3,
     "skills": [
-      "A",
-      "SENIOR"
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": 4,
@@ -232,8 +227,7 @@
     "name": "Staff 15",
     "band": 3,
     "skills": [
-      "A",
-      "SENIOR"
+      "First Aid"
     ],
     "is_night_worker": false,
     "max_consec_days": 5,
@@ -245,9 +239,7 @@
     "name": "Staff 16",
     "band": 3,
     "skills": [
-      "A",
-      "B",
-      "SENIOR"
+      "Python"
     ],
     "is_night_worker": false,
     "max_consec_days": null,
@@ -262,9 +254,9 @@
     "name": "Staff 17",
     "band": 3,
     "skills": [
-      "A",
-      "B",
-      "SENIOR"
+      "Python",
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": null,
@@ -276,7 +268,7 @@
     "name": "Staff 18",
     "band": 2,
     "skills": [
-      "A"
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": 3,
@@ -292,10 +284,7 @@
     "id": 19,
     "name": "Staff 19",
     "band": 3,
-    "skills": [
-      "A",
-      "B"
-    ],
+    "skills": [],
     "is_night_worker": false,
     "max_consec_days": 5,
     "holidays": [
@@ -308,9 +297,7 @@
     "id": 20,
     "name": "Staff 20",
     "band": 2,
-    "skills": [
-      "A"
-    ],
+    "skills": [],
     "is_night_worker": true,
     "max_consec_days": 4,
     "holidays": [
@@ -326,8 +313,7 @@
     "name": "Staff 21",
     "band": 3,
     "skills": [
-      "B",
-      "SENIOR"
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": null,
@@ -344,9 +330,7 @@
     "name": "Staff 22",
     "band": 2,
     "skills": [
-      "A",
-      "B",
-      "SENIOR"
+      "First Aid"
     ],
     "is_night_worker": true,
     "max_consec_days": 3,
@@ -361,7 +345,9 @@
     "name": "Staff 23",
     "band": 3,
     "skills": [
-      "A"
+      "Python",
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": 3,
@@ -379,7 +365,7 @@
     "name": "Staff 24",
     "band": 3,
     "skills": [
-      "SENIOR"
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": 5,
@@ -394,8 +380,7 @@
     "name": "Staff 25",
     "band": 2,
     "skills": [
-      "A",
-      "SENIOR"
+      "Python"
     ],
     "is_night_worker": true,
     "max_consec_days": 5,
@@ -409,11 +394,7 @@
     "id": 26,
     "name": "Staff 26",
     "band": 1,
-    "skills": [
-      "A",
-      "B",
-      "SENIOR"
-    ],
+    "skills": [],
     "is_night_worker": true,
     "max_consec_days": 5,
     "holidays": [
@@ -427,8 +408,7 @@
     "name": "Staff 27",
     "band": 3,
     "skills": [
-      "A",
-      "B"
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": 4,
@@ -443,7 +423,7 @@
     "name": "Staff 28",
     "band": 1,
     "skills": [
-      "B"
+      "First Aid"
     ],
     "is_night_worker": true,
     "max_consec_days": null,
@@ -454,9 +434,7 @@
     "id": 29,
     "name": "Staff 29",
     "band": 3,
-    "skills": [
-      "SENIOR"
-    ],
+    "skills": [],
     "is_night_worker": true,
     "max_consec_days": 3,
     "holidays": [],
@@ -467,7 +445,7 @@
     "name": "Staff 30",
     "band": 2,
     "skills": [
-      "B"
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": null,
@@ -480,10 +458,7 @@
     "id": 31,
     "name": "Staff 31",
     "band": 3,
-    "skills": [
-      "B",
-      "SENIOR"
-    ],
+    "skills": [],
     "is_night_worker": true,
     "max_consec_days": null,
     "holidays": [
@@ -499,7 +474,7 @@
     "name": "Staff 32",
     "band": 1,
     "skills": [
-      "A"
+      "First Aid"
     ],
     "is_night_worker": true,
     "max_consec_days": null,
@@ -511,7 +486,7 @@
     "name": "Staff 33",
     "band": 3,
     "skills": [
-      "SENIOR"
+      "Python"
     ],
     "is_night_worker": true,
     "max_consec_days": 3,
@@ -529,9 +504,8 @@
     "name": "Staff 34",
     "band": 2,
     "skills": [
-      "A",
-      "B",
-      "SENIOR"
+      "Python",
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": 4,
@@ -545,8 +519,8 @@
     "name": "Staff 35",
     "band": 2,
     "skills": [
-      "A",
-      "SENIOR"
+      "Python",
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": 3,
@@ -564,7 +538,8 @@
     "name": "Staff 36",
     "band": 1,
     "skills": [
-      "B"
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": null,
@@ -580,8 +555,7 @@
     "name": "Staff 37",
     "band": 2,
     "skills": [
-      "A",
-      "SENIOR"
+      "First Aid"
     ],
     "is_night_worker": false,
     "max_consec_days": 4,
@@ -596,11 +570,7 @@
     "id": 38,
     "name": "Staff 38",
     "band": 3,
-    "skills": [
-      "A",
-      "B",
-      "SENIOR"
-    ],
+    "skills": [],
     "is_night_worker": true,
     "max_consec_days": 3,
     "holidays": [],
@@ -613,8 +583,7 @@
     "name": "Staff 39",
     "band": 3,
     "skills": [
-      "A",
-      "SENIOR"
+      "Python"
     ],
     "is_night_worker": false,
     "max_consec_days": null,
@@ -629,7 +598,8 @@
     "name": "Staff 40",
     "band": 2,
     "skills": [
-      "B"
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": 3,
@@ -643,8 +613,8 @@
     "name": "Staff 41",
     "band": 2,
     "skills": [
-      "B",
-      "SENIOR"
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": false,
     "max_consec_days": null,
@@ -660,9 +630,8 @@
     "name": "Staff 42",
     "band": 3,
     "skills": [
-      "A",
-      "B",
-      "SENIOR"
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": null,
@@ -679,8 +648,7 @@
     "name": "Staff 43",
     "band": 1,
     "skills": [
-      "A",
-      "B"
+      "Python"
     ],
     "is_night_worker": false,
     "max_consec_days": 5,
@@ -695,7 +663,9 @@
     "name": "Staff 44",
     "band": 3,
     "skills": [
-      "A"
+      "Python",
+      "First Aid",
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": 4,
@@ -710,7 +680,8 @@
     "name": "Staff 45",
     "band": 1,
     "skills": [
-      "SENIOR"
+      "Python",
+      "First Aid"
     ],
     "is_night_worker": true,
     "max_consec_days": 4,
@@ -727,8 +698,8 @@
     "name": "Staff 46",
     "band": 2,
     "skills": [
-      "B",
-      "SENIOR"
+      "Python",
+      "First Aid"
     ],
     "is_night_worker": false,
     "max_consec_days": 5,
@@ -745,8 +716,8 @@
     "name": "Staff 47",
     "band": 3,
     "skills": [
-      "B",
-      "SENIOR"
+      "Python",
+      "First Aid"
     ],
     "is_night_worker": false,
     "max_consec_days": 4,
@@ -758,7 +729,8 @@
     "name": "Staff 48",
     "band": 1,
     "skills": [
-      "SENIOR"
+      "Python",
+      "First Aid"
     ],
     "is_night_worker": false,
     "max_consec_days": 5,
@@ -772,7 +744,7 @@
     "name": "Staff 49",
     "band": 3,
     "skills": [
-      "A"
+      "Senior"
     ],
     "is_night_worker": true,
     "max_consec_days": 3,

@@ -71,6 +71,9 @@ class Config:
     DEFAULT_MIN_STAFF: int = 2
     DEFAULT_MIN_SKILL_NAME: str = "ANY"
 
+    def __post_init__(self) -> None:
+        self.ensure_skill_grids()
+
     def validate(self):
         """
         Validate the Config object has sensible values before solving.

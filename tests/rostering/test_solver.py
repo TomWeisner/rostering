@@ -37,6 +37,7 @@ def test_max_consecutive_days_rule_enforces_employee_cap():
     ]
     data = InputData(
         staff=staff,
+        cfg=cfg,
         allowed=[[True] * cfg.HOURS],
     )
 

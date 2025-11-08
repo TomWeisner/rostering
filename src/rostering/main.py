@@ -14,7 +14,7 @@ from rostering.result_types import SolveResult
 InputBuilder = Callable[[Config], InputData]
 
 
-def _default_input_builder(config: Config) -> InputData:
+def default_input_builder(config: Config) -> InputData:
     """Build synthetic input data using the project's helper."""
     seed = config.SEED if config.SEED is not None else 42
     return build_input(config, DAYS=config.DAYS, N=config.N, seed=seed)
@@ -67,7 +67,7 @@ def run_solver(
 
     input_data = data
     if input_data is None:
-        builder = input_builder or _default_input_builder
+        builder = input_builder or default_input_builder
         input_data = builder(cfg_obj)
 
     staff_count = len(getattr(input_data, "staff", []) or [])
@@ -104,7 +104,7 @@ def main() -> SolveResult:
     return run_solver(
         config=cfg,
         validate_config=True,
-        input_builder=_default_input_builder,
+        input_builder=default_input_builder,
         reporter=Reporter(cfg),
         enable_reporting=True,
         progress_cb=MinimalProgress(

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
+from typing import Optional
 
-# Your staff generator
+from rostering.config import Config
 from rostering.generate.staff import (
     Staff,
     StaffGenConfig,
@@ -13,7 +14,15 @@ from rostering.generate.staff import (
 @dataclass
 class InputData:
     staff: list[Staff]
-    allowed: list[list[bool]]  # shape: (N, 24)
+    cfg: Config
+    allowed: Optional[list[list[bool]]] = None  # shape: (N, 24)
+
+    def __post_init__(self) -> None:
+        if self.allowed is None:
+            allowed_np = build_allowed_matrix(self.staff, self.cfg)
+            self.allowed = allowed_np.astype(bool).tolist()
+        else:
+            self.allowed = [[bool(val) for val in row] for row in self.allowed or []]
 
 
 def build_input(cfg, DAYS: int, N: int, seed: int = 7) -> InputData:
@@ -52,5 +61,6 @@ def build_input(cfg, DAYS: int, N: int, seed: int = 7) -> InputData:
 
     return InputData(
         staff=staff,
+        cfg=cfg,
         allowed=allowed,
     )
