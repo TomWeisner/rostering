@@ -113,7 +113,6 @@ def run_solver(
 
 
 def main() -> SolveResult:
-    """CLI entry point retained for backwards compatibility."""
     return run_solver(
         config=cfg,
         validate_config=True,

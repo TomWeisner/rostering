@@ -78,13 +78,24 @@ def sample_employee_hourly_gantt_plot(
     if num_staff == 0:
         return
 
-    rng = random.Random(cfg.SEED if cfg.SEED is not None else 555)
+    rng = random.Random(cfg.SEED if cfg.SEED is not None else 999)
     available_indices = list(range(min(hourly.shape[1], len(staff))))
     rng.shuffle(available_indices)
     chosen_indices = sorted(available_indices[:num_staff])
 
     sample_cols = [hourly.columns[i] for i in chosen_indices]
     sample_staff = [staff[i] for i in chosen_indices]
+    # Sort chosen staff by band (descending so higher bands appear on top). Tie-break by name.
+    sorted_pairs = sorted(
+        zip(sample_staff, sample_cols),
+        key=lambda pair: (
+            (getattr(pair[0], "band", 0) or 0),
+            getattr(pair[0], "name", ""),
+        ),
+        reverse=True,
+    )
+    sample_staff = [s for s, _ in sorted_pairs]
+    sample_cols = [c for _, c in sorted_pairs]
 
     date_index = pd.to_datetime(hourly.index.get_level_values("date"))
     hour_index = pd.to_timedelta(hourly.index.get_level_values("hour"), unit="h")
@@ -139,7 +150,7 @@ def sample_employee_hourly_gantt_plot(
     ax.set_ylabel("Employee")
     ax.set_xlabel("Time of shift")
     ax.set_title(f"Sample employee shifts (up to {num_staff} employees)", fontsize=11)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d\n%H:%M"))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
 
     start = timestamps.min()
     end = timestamps.max() + pd.Timedelta(hours=1)
