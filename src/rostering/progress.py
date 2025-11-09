@@ -26,7 +26,7 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
             print_msg = (
                 "\nbest: objective value (sum of penalties) of best solution found so far\n"
                 "optimal: estimate of lowest possible objective value\n"
-                "ratio: |best| / |optimal| (shows how far current best is from solver bound)\n\n"
+                "ratio: best / optimal (shows how far current best is from solver bound)\n\n"
             )
             print(print_msg)
             self.has_performed_initial_print = True
@@ -59,7 +59,7 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
             else:
                 pct_field = "  n/a "
             print(
-                f"[{now:6.1f}s] pct of time limit={pct_field} | best={best_field} | ratio={ratio_field} | sols={self.sols:<5.0f}",
+                f"[{now:5.1f}s] pct of time limit={pct_field} | best={best_field} | ratio={ratio_field} | sols={self.sols:<5.0f}",
                 flush=True,
             )
             self.last_time = now

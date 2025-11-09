@@ -23,8 +23,8 @@ class RestRule(Rule):
     order = 50
     name = "Rest"
 
-    def __init__(self, model):
-        super().__init__(model)
+    def __init__(self, model, **settings):
+        super().__init__(model, **settings)
         self.enabled = model.cfg.REST_HOURS > 0  # disable with 0
 
     def add_hard(self):

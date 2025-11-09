@@ -21,35 +21,42 @@ def _required_hours_lower_bound(C) -> int:
 
 class FairnessRule(Rule):
     """
-    Soft-penalty for fairness: minimize L1 deviation from equal total hours.
+    Balance total assigned hours across employees by penalising deviations from
+    the "equal share" target.
 
-    Config used:
-      DAYS, HOURS, N
-      WEEKLY_MAX_HOURS (optional upper bound per-employee)
-      FAIRNESS_WEIGHT_PER_HOUR (int)  -> base L1 weight
-      SKILL_MIN (to derive the required-hours lower bound)
+    This class intentionally serves as a template for other rules:
+      • It documents every tuning knob.
+      • It explains each modelling phase in comments.
+      • It demonstrates how to convert human language requirements into CP-SAT
+        linear expressions with clear intermediate variables.
 
-      # Exponential tiering controls:
-      FAIRNESS_DEV_CAP (int, max deviation tiers to model, default=min(horizon_ub, 40))
-      FAIRNESS_TIER_BASE (float, >1.0, growth base, default=1.2)
-      FAIRNESS_TIER_SCALE_INT (int, positive, scale factor for integer weights, default=100)
+    Settings (RuleSpec):
+      base: float (>1.0)
+          Growth factor for the exponential tiers. Larger bases punish outliers
+          more aggressively because each extra hour multiplies the cost.
+      scale: float (>=0)
+          Multiplier applied before rounding weights to integers. Use it to
+          change the overall magnitude of fairness penalties relative to other
+          soft objectives.
+      max_deviation_hours: int
+          Caps how many tiers we build. Once the deviation exceeds this value,
+          additional hours do not create new penalty literals, which keeps the
+          model small.
+
+    Required config fields:
+      cfg.DAYS, cfg.HOURS, cfg.N
+      cfg.SKILL_MIN (to estimate the total demand)
+      cfg.WEEKLY_MAX_HOURS (optional per-employee bound)
     """
 
     order = 90
     name = "Fairness"
 
-    def __init__(self, model):
-        super().__init__(model)
+    def __init__(self, model, **settings):
+        super().__init__(model, **settings)
 
     def contribute_objective(self):
-        """
-        Contribute to the model's objective function:
-        - if not `self.enabled`, returns an empty list
-        - if `C.N <= 0`, returns an empty list
-        - otherwise, returns linear terms that encourage equal total hours
-          across all employees, with an *exponentially increasing* penalty
-          for larger deviations from the equal-share target.
-        """
+        # If the rule is disabled or the roster is empty, there is nothing to add.
         if not self.enabled:
             return []
 
@@ -57,23 +64,29 @@ class FairnessRule(Rule):
         if C.N <= 0:
             return []
 
-        # Equal-share target
+        # ------------------------------------------------------------------
+        # 1) Compute the equal-share target.
+        #    We use the lower bound implied by SKILL_MIN to avoid the trivial
+        #    "zero target" when no skills are required.
+        # ------------------------------------------------------------------
         total_required_lb = _required_hours_lower_bound(C)
         target = total_required_lb / C.N  # may be fractional
         t_floor, t_ceil = int(np.floor(target)), int(np.ceil(target))
 
-        # Per-employee feasible upper bound for total hours
+        # ------------------------------------------------------------------
+        # 2) Derive a safe upper bound on each employee's workable hours.
+        #    This keeps intermediate IntVars tight.
+        # ------------------------------------------------------------------
         horizon_ub = int(C.DAYS * C.HOURS)
         if getattr(C, "WEEKLY_MAX_HOURS", None) is not None:
             horizon_ub = min(horizon_ub, int(C.WEEKLY_MAX_HOURS))
 
-        # ---- Exponential tiering parameters ----
-
-        # Do not penalise additionally if deviation is larger than this
-        DEV_CAP = int(getattr(C, "FAIRNESS_MAX_DEVIATION_HOURS", min(horizon_ub, 40)))
-
-        BASE = float(getattr(C, "FAIRNESS_BASE", 1.2))  # > 1.0
-        SCALE = int(getattr(C, "FAIRNESS_SCALE", 1))  # positive numver
+        # ------------------------------------------------------------------
+        # 3) Exponential tier parameters pulled from settings.
+        # ------------------------------------------------------------------
+        DEV_CAP = int(self.setting("max_deviation_hours", min(horizon_ub, 8)))
+        BASE = float(self.setting("base", 1.2))  # > 1.0
+        SCALE = float(self.setting("scale", 1.0))  # positive number
 
         print(
             f"Fairness: Base={BASE}, Scale={SCALE}, Max Dev={DEV_CAP}\n"
@@ -83,16 +96,33 @@ class FairnessRule(Rule):
 
         assert (
             BASE > 1.0
-        ), "FAIRNESS_BASE must be > 1.0 to enable exponential growth of penalties"
+        ), "Fairness base must be > 1.0 to enable exponential growth of penalties"
         assert SCALE >= 0
 
-        # Integer tier weights: w_k = round(SCALE * BASE^k), k = 1..DEV_CAP
-        tier_weights = [int(round(SCALE * (BASE**k))) for k in range(1, DEV_CAP + 1)]
+        # Precompute cumulative penalty table so we can look up the total weight
+        # with a single AddElement instead of spawning many Boolean tiers.
+        penalty_table = [0]
+        cumulative = 0
+        for k in range(1, DEV_CAP + 1):
+            cumulative += int(round(SCALE * (BASE**k)))
+            penalty_table.append(cumulative)
+        max_penalty = penalty_table[-1]
 
         terms = []
 
+        cap_constant = M.NewIntVar(DEV_CAP, DEV_CAP, "fair_dev_cap_const")
+
         for e in range(C.N):
-            # Total hours assigned to employee e
+            # ------------------------------------------------------------------
+            # 4) Total hours for employee e.
+            #    Example: DAYS=5, HOURS=24 -> horizon_ub=120 so T_e ∈ [0,120].
+            #    We enforce
+            #        T_e = Σ_{d=0..D-1} Σ_{h=0..H-1} x[e,d,h]
+            #    meaning the total stored in T_e must exactly match the worked
+            #    hours. Without this equality, the solver could set T_e=0 even
+            #    when the employee covers 60 hours, effectively dodging fairness
+            #    penalties altogether.
+            # ------------------------------------------------------------------
             T_e = M.NewIntVar(0, horizon_ub, f"T_e{e}")
             M.Add(
                 T_e
@@ -103,20 +133,34 @@ class FairnessRule(Rule):
                 )
             )
 
-            # Absolute deviation |T_e - target| linearized around fractional target
+            # ------------------------------------------------------------------
+            # 5) Linearise |T_e - target| by bounding it between floor/ceil.
+            #    Example target = 37.5h -> t_floor=37, t_ceil=38.
+            #      • If T_e = 45, dev must be ≥ 45 - 37 = 8 (over-scheduled).
+            #      • If T_e = 30, dev must be ≥ 38 - 30 = 8 (under-scheduled).
+            #    With both inequalities active, dev mirrors |T_e - 37.5| while
+            #    keeping everything in integer arithmetic (CP-SAT cannot use
+            #    floating-point constants directly in constraints).
+            # ------------------------------------------------------------------
             dev = M.NewIntVar(0, horizon_ub, f"dev_e{e}")
             M.Add(dev >= T_e - t_floor)
             M.Add(dev >= t_ceil - T_e)
 
-            # Base L1 fairness penalty
             terms.append(dev)
 
-            # ---- Exponential tiered penalty for outliers ----
-            # b_{e,k} = 1  iff  dev >= k,   for k = 1..DEV_CAP
-            for k, w_k in enumerate(tier_weights, start=1):
-                b = M.NewBoolVar(f"dev_ge_{k}_e{e}")
-                M.Add(dev >= k).OnlyEnforceIf(b)
-                M.Add(dev <= k - 1).OnlyEnforceIf(b.Not())
-                terms.append(int(w_k) * b)
+            # ------------------------------------------------------------------
+            # 6) Exponential tiers via lookup table.
+            #    Example: base=1.4, scale=1.0, max_dev=8.
+            #      • penalty_table[1] ≈ 1.4
+            #      • penalty_table[4] ≈ 1.4 + 2.0 + 2.7 + 3.8 ≈ 9.9
+            #    Instead of four BoolVars, we clamp dev to 8 and feed it
+            #    directly into AddElement, which returns the cumulative weight.
+            # ------------------------------------------------------------------
+            capped_dev = M.NewIntVar(0, DEV_CAP, f"dev_cap_e{e}")
+            M.AddMinEquality(capped_dev, [dev, cap_constant])
+
+            penalty = M.NewIntVar(0, max_penalty, f"fair_penalty_e{e}")
+            M.AddElement(capped_dev, penalty_table, penalty)
+            terms.append(penalty)
 
         return terms

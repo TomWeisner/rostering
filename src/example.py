@@ -108,6 +108,8 @@ def run_option(option: int) -> None:
 
         staff = staff_from_json(Path("src/example_staff.json"))
         cfg.N = len(staff)
+        cfg.NUM_PARALLEL_WORKERS = 10
+        cfg.TIME_LIMIT_SEC = 30
         require_skill_everywhere(cfg, "Python", k=1)
         require_skill_in_slots(
             cfg,

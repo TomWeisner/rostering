@@ -44,8 +44,8 @@ class ShiftIntervalRule(Rule):
     order = 30
     name = "ShiftIntervalCoverage"
 
-    def __init__(self, model):
-        super().__init__(model)
+    def __init__(self, model, **settings):
+        super().__init__(model, **settings)
 
     # ------------------------------------------------------------------ #
     # Declare containers for helper literals we expose to other rules

@@ -12,8 +12,8 @@ class WeeklyCapRule(Rule):
     order = 70
     name = "WeeklyCap"
 
-    def __init__(self, model):
-        super().__init__(model)
+    def __init__(self, model, **settings):
+        super().__init__(model, **settings)
         self.enabled = (
             model.cfg.WEEKLY_MAX_HOURS is not None
         )  # toggle by setting to None

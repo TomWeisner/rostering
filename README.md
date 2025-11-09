@@ -140,7 +140,7 @@ Key rule highlights:
 
 1. **Progress callback** – every `LOG_SOLUTIONS_FREQUENCY_SECONDS`:
    ```text
-   [  3.0s] pct of time limit= 20.00% | best=12,345 | ratio=1.050 | sols=3
+   [  3.0s] pct of time limit=20.00% | best=12,345 | ratio=1.050 | sols=3
    ```
    - `pct of time limit` = elapsed time vs. limit
    - `best` = best objective found so far (penalty total)

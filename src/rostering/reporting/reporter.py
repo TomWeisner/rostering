@@ -5,10 +5,18 @@ from pathlib import Path
 from typing import Any
 
 from rostering.input_data import InputData
-
-from .adapters import PandasResultAdapter, ResultAdapter
-from .plots import show_hour_of_day_histograms, show_solution_progress
-from .text_report import ReportDocument, render_text_report, set_active_report
+from rostering.reporting.adapters import PandasResultAdapter, ResultAdapter
+from rostering.reporting.plots import (
+    show_hour_of_day_histograms,
+    show_solution_progress,
+)
+from rostering.reporting.stats import format_model_stats, format_solver_stats
+from rostering.reporting.text_report import (
+    ReportDocument,
+    render_text_report,
+    set_active_report,
+)
+from rostering.result_types import SolveResult
 
 
 class Reporter:
@@ -34,8 +42,20 @@ class Reporter:
 
     # ---------- Back-compat entry points ----------
 
-    def pre_solve(self, model: object) -> None:
-        """Run the model's precheck() if available, confirming continuation when infeasible."""
+    def pre_solve(
+        self, model: object, *, stage: str = "precheck", model_stats: str | None = None
+    ) -> None:
+        """
+        Run pre-check confirmation or log model stats depending on the stage.
+        stage="precheck"  -> perform feasibility prompt.
+        stage="model_stats" -> print model complexity summary if available.
+        """
+        if stage == "model_stats":
+            summary = format_model_stats(model_stats)
+            if summary:
+                print("\nModel stats summary:\n" + summary)
+            return
+
         precheck = getattr(model, "precheck", None)
         if not callable(precheck):
             print("Pre-check: (model has no `precheck()`; skipping)")
@@ -59,8 +79,12 @@ class Reporter:
             num_print_examples=self.num_print_examples,
         )
 
-    def post_solve(self, res: object, data: object) -> None:
+    def post_solve(self, res: SolveResult, data: InputData) -> None:
         """Render textual report (and optional plots) after solving."""
+        stats_summary = format_solver_stats(getattr(res, "solver_stats", None))
+        if stats_summary:
+            print("\nSolver stats summary:\n" + stats_summary)
+
         status = self.adapter.status_name(res)
         if status not in {"FEASIBLE", "OPTIMAL"}:
             return
@@ -69,17 +93,17 @@ class Reporter:
         set_active_report(report_doc)
         try:
             self.render_text_report(res, data)
-            if isinstance(data, InputData):
-                show_hour_of_day_histograms(
-                    self.cfg,
-                    res,
-                    data,
-                    self.adapter,
-                    enable_plot=self.enable_plots,
-                )
-            history = getattr(res, "progress_history", None)
-            if self.enable_plots and history:
-                show_solution_progress(history)
+            if not self.enable_plots:
+                return
+            show_hour_of_day_histograms(
+                self.cfg,
+                res,
+                data,
+                self.adapter,
+                enable_plot=self.enable_plots,
+            )
+            history = res.progress_history or []
+            show_solution_progress(history=history)
         finally:
             set_active_report(None)
             report_doc.write()

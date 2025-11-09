@@ -159,10 +159,10 @@ def compute_agg_run(
     ctx: BuildContext, solver: cp_model.CpSolver, agg: Literal["max", "mean"]
 ) -> float:
     """Compute average run length over positive run values."""
-    if not ctx.runlen:
+    if not ctx.consec_days_worked:
         return 0.0
     vals = [
-        int(solver.Value(ctx.runlen[(e, d)]))
+        int(solver.Value(ctx.consec_days_worked[(e, d)]))
         for e in range(ctx.cfg.N)
         for d in range(ctx.cfg.DAYS)
     ]

@@ -38,24 +38,13 @@ class Config:
 
     ### SOFT PENALTIES ###
 
-    # Consecutive days worked
-    RUN_PEN_PREF_FREE: int = 5
-    RUN_PEN_BASE: float = 2.0
-    RUN_PEN_SCALER: float = 1.0
-    RUN_PEN_SCALE_INT: int = 1000
-
-    # Fairness
-    FAIRNESS_BASE: float = 1.4
-    FAIRNESS_SCALE: float = 1.0
-    FAIRNESS_MAX_DEVIATION_HOURS: int = 45
-
     WEEKLY_MAX_HOURS: Optional[int] = 40  # None = disable
 
     ### SOLVER SETUP ###
 
     # Solver
     TIME_LIMIT_SEC: float = 30.0
-    NUM_PARALLEL_WORKERS: int = 1
+    NUM_PARALLEL_WORKERS: int = 5
     LOG_SOLUTIONS_FREQUENCY_SECONDS: float = 5.0
 
     # Diagnostics
@@ -82,8 +71,6 @@ class Config:
             raise ValueError("Require 0 < MIN_SHIFT_HOURS <= MAX_SHIFT_HOURS <= HOURS.")
         if not (0 <= self.REST_HOURS <= self.HOURS):
             raise ValueError("REST_HOURS must be in [0, HOURS].")
-        if self.RUN_PEN_BASE < 1.0:
-            raise ValueError("RUN_PEN_BASE must be >= 1.0.")
         if (
             self.WEEKLY_MAX_HOURS is not None
             and self.WEEKLY_MAX_HOURS > self.DAYS * self.HOURS
@@ -225,19 +212,11 @@ cfg = Config(
     MIN_SHIFT_HOURS=4,
     MAX_SHIFT_HOURS=12,
     REST_HOURS=12,
-    RUN_PEN_PREF_FREE=5,
-    RUN_PEN_BASE=2.0,
-    RUN_PEN_SCALER=1.0,
-    RUN_PEN_SCALE_INT=10,
-    FAIRNESS_BASE=1.25,
-    FAIRNESS_SCALE=100,
-    FAIRNESS_MAX_DEVIATION_HOURS=15,
     WEEKLY_MAX_HOURS=40,
     TIME_LIMIT_SEC=10.0,
     NUM_PARALLEL_WORKERS=12,
     LOG_SOLUTIONS_FREQUENCY_SECONDS=5.0,
     ENABLE_UNSAT_CORE=True,
-    INSPECT_EMPLOYEE_IDS=field(default_factory=lambda: [0, 1, 17]),
     SEED=3,
 )
 
