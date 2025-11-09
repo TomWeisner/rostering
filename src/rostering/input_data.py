@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from rostering.config import Config
-from rostering.generate.staff import (
+from rostering.generate.make_staff import (
     StaffGenConfig,
     assign_time_off,
     build_allowed_matrix,

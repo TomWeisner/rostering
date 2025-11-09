@@ -7,9 +7,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import rostering.generate.staff as staff_mod
+import rostering.generate.make_staff as staff_mod
 from rostering.config import Config
-from rostering.generate.staff import (
+from rostering.generate.make_staff import (
     StaffGenConfig,
     _deterministic_counts,
     allowed_hours_for_staff,

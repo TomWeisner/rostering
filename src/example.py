@@ -24,7 +24,7 @@ from rostering.config import (
     require_skill_everywhere,
     require_skill_in_slots,
 )
-from rostering.generate.staff import staff_from_json
+from rostering.generate.make_staff import staff_from_json
 from rostering.main import MinimalProgress, Reporter, default_input_builder
 from rostering.rules.availability import AvailabilityRule
 from rostering.rules.base import RuleSpec
