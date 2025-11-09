@@ -3,7 +3,7 @@
 > Optimise colleague shift assignments based on employee holidays/preferences and business needs.
 > Hard constraints are **enforced**, while undesirable combinations incur **penalties** that the optimiser **minimises**.
 
-[🐍 TestPyPI](https://test.pypi.org/project/rostering/) • [💻 GitHub Repo](https://github.com/TomWeisner/rostering)
+[🐍 PyPI](https://test.pypi.org/project/rostering/) • [💻 GitHub](https://github.com/TomWeisner/rostering) • [📝 Medium](https://medium.com/@tomweisner/when-optimisation-beats-machine-learning-the-overlooked-tool-for-data-scientists-b0a700d65320)
 
 [![codecov](https://codecov.io/gh/TomWeisner/rostering/branch/master/graph/badge.svg?token=76IBOK4C18)](https://codecov.io/gh/TomWeisner/rostering)
 [![CI](https://github.com/TomWeisner/rostering/actions/workflows/tests.yml/badge.svg)](https://github.com/TomWeisner/rostering/actions/workflows/tests.yml)
