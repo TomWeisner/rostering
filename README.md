@@ -147,11 +147,11 @@ Key rule highlights:
    - `example_shifts_gantt.png` (hourly Gantt using up to 10 random staff)
    - Additional plots mirrored below for reference:
      - Hour-of-day coverage:<br>
-       <p><img src="src/example_hour_of_day_skill_bar_chart.png" width="420" alt="Hour-of-day coverage" /></p>
+       <p><img src="https://raw.githubusercontent.com/TomWeisner/rostering/master/src/example_hour_of_day_skill_bar_chart.png" width="420" alt="Hour-of-day coverage" /></p>
      - Solver progress:<br>
-       <p><img src="src/example_solution_progress.png" width="420" alt="Solver progress" /></p>
+       <p><img src="https://raw.githubusercontent.com/TomWeisner/rostering/master/src/example_solution_progress.png" width="420" alt="Solver progress" /></p>
      - Sample hourly Gantt:<br>
-       <p><img src="src/example_shifts_gantt.png" width="420" alt="Sample Gantt" /></p>
+       <p><img src="https://raw.githubusercontent.com/TomWeisner/rostering/master/src/example_shifts_gantt.png" width="420" alt="Sample Gantt" /></p>
    Remove or archive them between runs if you want a clean slate.
 
 ---
