@@ -26,30 +26,25 @@ class Config:
     # Rest
     REST_HOURS: int = 12  # set 0 to diagnose without rest
 
+    # Shift availability windows
+    NIGHT_SHIFT_START: int = 18
+    NIGHT_SHIFT_END: int = 6
+    NIGHT_TO_DAY_SLACK_HOURS: int = 2
+    DAY_TO_NIGHT_SLACK_HOURS: int = 1
+
     # Skills requiring certain coverage minimums (or maximums)
     SKILL_MIN: Optional[SkillGrid] = None
     SKILL_MAX: Optional[SkillGrid] = None
 
     ### SOFT PENALTIES ###
 
-    # Consecutive days worked
-    RUN_PEN_PREF_FREE: int = 5
-    RUN_PEN_BASE: float = 2.0
-    RUN_PEN_SCALER: float = 1.0
-    RUN_PEN_SCALE_INT: int = 1000
-
-    # Fairness
-    FAIRNESS_BASE: float = 1.4
-    FAIRNESS_SCALE: float = 1.0
-    FAIRNESS_MAX_DEVIATION_HOURS: int = 45
-
     WEEKLY_MAX_HOURS: Optional[int] = 40  # None = disable
 
     ### SOLVER SETUP ###
 
     # Solver
-    TIME_LIMIT_SEC: float = 60.0
-    NUM_PARALLEL_WORKERS: int = 1
+    TIME_LIMIT_SEC: float = 30.0
+    NUM_PARALLEL_WORKERS: int = 5
     LOG_SOLUTIONS_FREQUENCY_SECONDS: float = 5.0
 
     # Diagnostics
@@ -61,6 +56,13 @@ class Config:
     # RANDOM SEED
     SEED: Optional[int] = None
 
+    # Default coverage requirements (used when SKILL_MIN is empty)
+    DEFAULT_MIN_STAFF: int = 2
+    DEFAULT_MIN_SKILL_NAME: str = "ANY"
+
+    def __post_init__(self) -> None:
+        self.ensure_skill_grids()
+
     def validate(self):
         """
         Validate the Config object has sensible values before solving.
@@ -69,8 +71,6 @@ class Config:
             raise ValueError("Require 0 < MIN_SHIFT_HOURS <= MAX_SHIFT_HOURS <= HOURS.")
         if not (0 <= self.REST_HOURS <= self.HOURS):
             raise ValueError("REST_HOURS must be in [0, HOURS].")
-        if self.RUN_PEN_BASE < 1.0:
-            raise ValueError("RUN_PEN_BASE must be >= 1.0.")
         if (
             self.WEEKLY_MAX_HOURS is not None
             and self.WEEKLY_MAX_HOURS > self.DAYS * self.HOURS
@@ -80,6 +80,20 @@ class Config:
             raise ValueError("TIME_LIMIT_SEC must be > 0.")
         if self.NUM_PARALLEL_WORKERS <= 0:
             raise ValueError("NUM_PARALLEL_WORKERS must be > 0.")
+        for attr in ("NIGHT_SHIFT_START", "NIGHT_SHIFT_END"):
+            val = getattr(self, attr)
+            if not (0 <= val <= 23):
+                raise ValueError(f"{attr} must be within [0, 23].")
+        for attr in ("NIGHT_TO_DAY_SLACK_HOURS", "DAY_TO_NIGHT_SLACK_HOURS"):
+            if getattr(self, attr) < 0:
+                raise ValueError(f"{attr} must be non-negative.")
+
+    def ensure_skill_grids(self) -> None:
+        """
+        Ensure SKILL_MIN/SKILL_MAX grids exist and optionally seed default coverage.
+        """
+        _ensure_grids(self)
+        _apply_default_skill_requirements(self)
 
 
 def _ensure_grids(C: Config) -> None:
@@ -87,6 +101,25 @@ def _ensure_grids(C: Config) -> None:
         C.SKILL_MIN = [[{} for _ in range(C.HOURS)] for _ in range(C.DAYS)]
     if getattr(C, "SKILL_MAX", None) is None:
         C.SKILL_MAX = [[{} for _ in range(C.HOURS)] for _ in range(C.DAYS)]
+
+
+def _apply_default_skill_requirements(C: Config) -> None:
+    """
+    Seed DEFAULT_MIN_STAFF requirement if grid is empty and default > 0.
+    """
+    if C.DEFAULT_MIN_STAFF <= 0:
+        return
+
+    min_grid: SkillGrid = cast(SkillGrid, C.SKILL_MIN)
+    has_existing = any(
+        cell for row in min_grid for cell in row if isinstance(cell, dict) and cell
+    )
+    if has_existing:
+        return
+
+    for d in range(C.DAYS):
+        for h in range(C.HOURS):
+            min_grid[d][h][C.DEFAULT_MIN_SKILL_NAME] = C.DEFAULT_MIN_STAFF
 
 
 def require_skill_everywhere(
@@ -179,19 +212,11 @@ cfg = Config(
     MIN_SHIFT_HOURS=4,
     MAX_SHIFT_HOURS=12,
     REST_HOURS=12,
-    RUN_PEN_PREF_FREE=5,
-    RUN_PEN_BASE=2.0,
-    RUN_PEN_SCALER=1.0,
-    RUN_PEN_SCALE_INT=10,
-    FAIRNESS_BASE=1.25,
-    FAIRNESS_SCALE=100,
-    FAIRNESS_MAX_DEVIATION_HOURS=15,
     WEEKLY_MAX_HOURS=40,
     TIME_LIMIT_SEC=10.0,
     NUM_PARALLEL_WORKERS=12,
     LOG_SOLUTIONS_FREQUENCY_SECONDS=5.0,
     ENABLE_UNSAT_CORE=True,
-    INSPECT_EMPLOYEE_IDS=field(default_factory=lambda: [0, 1, 17]),
     SEED=3,
 )
 

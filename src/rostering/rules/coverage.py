@@ -119,19 +119,19 @@ class CoverageRule(Rule):
         C, m = self.model.cfg, self.model.m
         DAYS, HOURS = int(C.DAYS), int(C.HOURS)
 
-        skill_min = getattr(C, "SKILL_MIN", None) or [
-            [{} for _ in range(HOURS)] for _ in range(DAYS)
-        ]
-        skill_max = getattr(C, "SKILL_MAX", None) or [
-            [{} for _ in range(HOURS)] for _ in range(DAYS)
-        ]
+        raw_skill_min = getattr(C, "SKILL_MIN", None)
+        raw_skill_max = getattr(C, "SKILL_MAX", None)
+        skill_min = raw_skill_min or [[{} for _ in range(HOURS)] for _ in range(DAYS)]
+        skill_max = raw_skill_max or [[{} for _ in range(HOURS)] for _ in range(DAYS)]
 
         self.model.a = {}  # (e,d,h,s) -> BoolVar
 
         for d in range(DAYS):
             for h in range(HOURS):
                 # build the set of skills that matter in this slot (min or max present)
-                slot_skills = set(skill_min[d][h].keys()) | set(skill_max[d][h].keys())
+                slot_skills = set(skill_min[d][h].keys())
+                if raw_skill_max is not None:
+                    slot_skills = slot_skills.union(set(skill_max[d][h].keys()))
                 if not slot_skills:
                     continue
                 for s in slot_skills:
@@ -158,9 +158,10 @@ class CoverageRule(Rule):
         skill_min = getattr(C, "SKILL_MIN", None) or [
             [{} for _ in range(HOURS)] for _ in range(DAYS)
         ]
-        skill_max = getattr(C, "SKILL_MAX", None) or [
-            [{} for _ in range(HOURS)] for _ in range(DAYS)
-        ]
+        skill_max = getattr(C, "SKILL_MAX", None)
+        has_skill_max = skill_max is not None
+        if not has_skill_max:
+            skill_max = [[{} for _ in range(HOURS)] for _ in range(DAYS)]
 
         # 1) Link each skill assignment to being at work that hour
         for (e, d, h, s), var in self.model.a.items():
@@ -196,16 +197,17 @@ class CoverageRule(Rule):
                             ct = m.Add(lhs >= req)
                             self._guard(ct, f"COV-MIN[s={s},d={d},h={h}]")
 
-                # Max: ∑_e a ≤ SKILL_MAX[d][h][s]
-                for s, cap in slot_max.items():
-                    cap = int(cap)
-                    if cap >= 0:
-                        a_e = [
-                            self.model.a[(e, d, h, s)]
-                            for e in range(int(C.N))
-                            if (e, d, h, s) in self.model.a
-                        ]
-                        if a_e:
-                            lhs = sum(a_e)
-                            ct = m.Add(lhs <= cap)
-                            self._guard(ct, f"COV-MAX[s={s},d={d},h={h}]")
+                if has_skill_max:
+                    # Max: ∑_e a ≤ SKILL_MAX[d][h][s]
+                    for s, cap in slot_max.items():
+                        cap = int(cap)
+                        if cap >= 0:
+                            a_e = [
+                                self.model.a[(e, d, h, s)]
+                                for e in range(int(C.N))
+                                if (e, d, h, s) in self.model.a
+                            ]
+                            if a_e:
+                                lhs = sum(a_e)
+                                ct = m.Add(lhs <= cap)
+                                self._guard(ct, f"COV-MAX[s={s},d={d},h={h}]")

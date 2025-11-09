@@ -1,24 +1,25 @@
 # Reporting subsystem
 
-This package turns solver output into textual summaries and plots.
+Transforms solver output into concise text plus lightweight visuals that end up in `outputs/report.pdf`.
 
 | Module | Responsibility |
 | --- | --- |
-| `adapters.py` | Defines `ResultAdapter` (protocol) and `PandasResultAdapter`, which normalise whatever the solver returns (`SolveResult` by default) into the data frames the reporters expect. |
-| `data_models.py` | Lightweight dataclasses (`SlotRequirement`, `SlotGap`, `CoverageMetrics`) used throughout the reporting stack. |
-| `metrics.py` | Pure functions that derive coverage statistics, slot gaps, and per-hour staffing averages from the model + solution. |
-| `text_report.py` | Renders the console report (per-employee hours, coverage summary, slot gaps, etc.). |
-| `plots.py` | Matplotlib helpers for hour-of-day coverage bars and the solution-progress plot; each figure is saved under `./figures/`. |
-| `reporter.py` | Orchestrator used by `rostering.main`: runs the model pre-check (with a confirmation prompt if infeasible), prints the text report, and triggers plots when enabled. |
+| `adapters.py` | `ResultAdapter` protocol + `PandasResultAdapter` bridge `SolveResult` into the DataFrame views that reporters expect. |
+| `data_models.py` | Small DTOs (`SlotRequirement`, `SlotGap`, `CoverageMetrics`) reused by metrics and renderers. |
+| `metrics.py` | Pure helpers for coverage checks, slot gaps, fairness summaries, etc. |
+| `plots.py` | Matplotlib views (hour-of-day stacked bars, solution-progress chart). Both save into the active `ReportDocument`. |
+| `model_stats.py` | Formatting helpers that turn CP-SAT model / solver stats into the short summaries printed in the CLI report. |
+| `text_report.py` | Owns the console/PDF text rendering plus the `ReportDocument` context that aggregates all prints + plots into `outputs/report.pdf`. |
+| `reporter.py` | High-level orchestrator: runs the model pre-check, prints text summaries, optionally invokes plots (skipped entirely when the solver status is not FEASIBLE/OPTIMAL). |
 
-Typical flow inside `Reporter.post_solve`:
+Flow inside `Reporter.post_solve`:
 
-1. `render_text_report(...)` prints summaries.
-2. `show_hour_of_day_histograms(...)` visualises stacked skill coverage by hour.
-3. `show_solution_progress(...)` plots best objective vs. solver bound by solution index (using the progress history captured by `MinimalProgress`).
+1. Format and print model solver stats with `model_stats.format_solver_stats`.
+2. If the run produced a trusted schedule, open a `ReportDocument`, call `render_text_report`, then append plots if `enable_plots=True`.
+3. Close the document which writes the combined PDF under `outputs/`.
 
-If you introduce a new reporting artefact:
+Adding new output:
 
-- Add the core calculation to `metrics.py` if it produces reusable data.
-- Keep view concerns in either `text_report.py` (for console output) or `plots.py` (for figures).
-- Wire it up in `reporter.py` so CLI callers automatically get the new output.
+1. Put reusable calculations in `metrics.py`.
+2. Render text in `text_report.py` and/or figures in `plots.py`.
+3. Kick off the new view from `reporter.py` so CLI callers get it automatically (non-feasible runs should remain quiet).***

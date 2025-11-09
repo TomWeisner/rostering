@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Protocol
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Protocol, Type
 
 if TYPE_CHECKING:
     from rostering.config import Config
@@ -16,8 +17,19 @@ class BuildCtxProto(Protocol):
     cfg: Config
     data: InputData
     x: dict[tuple[int, int, int], cp_model.IntVar]
+    y: dict[tuple[int, int], cp_model.IntVar]
+    z: dict[tuple[int, int], cp_model.IntVar]
+    consec_days_worked: dict[tuple[int, int], cp_model.IntVar]
 
     def add_assumption(self, label: str) -> cp_model.IntVar: ...
+
+
+@dataclass
+class RuleSpec:
+    cls: Type["Rule"]
+    order: int | None = None
+    enabled: bool = True
+    settings: dict[str, Any] = field(default_factory=dict)
 
 
 class Rule(ABC):
@@ -25,8 +37,9 @@ class Rule(ABC):
     enabled: bool = True
     name: str = "Rule"
 
-    def __init__(self, model: BuildCtxProto) -> None:
+    def __init__(self, model: BuildCtxProto, **settings: Any) -> None:
         self.model: BuildCtxProto = model
+        self._settings: dict[str, Any] = settings
 
     def _assumption_literal(self, label: str | None) -> cp_model.IntVar | None:
         """Return an assumption literal (or None) honoring ENABLE_UNSAT_CORE."""
@@ -60,3 +73,7 @@ class Rule(ABC):
         """Return zero or more JSON-serializable descriptors that a reporter can use.
         Default: [] (rule has nothing to report)."""
         return []
+
+    # Helper for subclasses to read optional settings
+    def setting(self, key: str, default: Any) -> Any:
+        return self._settings.get(key, default)

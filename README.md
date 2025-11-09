@@ -17,11 +17,12 @@
 
 1. [Features](#-features)
 2. [Quick start](#-quick-start)
-3. [How the optimiser works](#-how-the-optimiser-works)
-4. [Running & monitoring](#-running--monitoring)
-5. [Project tooling](#-project-tooling)
-6. [Contributing](#-contributing)
-7. [Publishing](#-publishing-to-testpypi)
+3. [Example CLI (`src/example.py`)](#-example-cli-srcexamplepy)
+4. [How the optimiser works](#-how-the-optimiser-works)
+5. [Running & monitoring](#-running--monitoring)
+6. [Project tooling](#-project-tooling)
+7. [Contributing](#-contributing)
+8. [Publishing](#-publishing-to-testpypi)
 
 ---
 
@@ -38,7 +39,7 @@
 
 ## 🚀 Quick start
 
-### 1. Install (choose one)
+### Installing the repo for use (choose one)
 
 **pip / TestPyPI**
 
@@ -55,7 +56,7 @@ poetry source add --priority explicit testpypi https://test.pypi.org/simple/
 poetry add --source testpypi rostering
 ```
 
-### 2. Clone the repo for local development
+### Cloning the repo for local development
 
 ```bash
 git clone https://github.com/TomWeisner/rostering.git
@@ -66,22 +67,40 @@ source .venv/bin/activate
 poetry run pre-commit install
 ```
 
-### 3. Run the optimiser
+#### Run the solver
 
-```bash
-poetry run python -m src.rostering.main
-```
+See `src/example.py` for using the `run_solver` method defined in `main.py`
 
-What happens:
+What happens in `main.py`:
 
 1. `rostering.config.cfg` is validated and used to generate synthetic staff/input data.
 2. The CP-SAT model is built (`rostering.build` + rules in `rostering.rules.*`).
 3. The solver runs with `MinimalProgress` printing progress and storing history.
-4. `Reporter.post_solve` prints textual summaries and writes plots to `./figures/`:
+4. `Reporter.post_solve` prints textual summaries and, via `produce_outputs`, saves artefacts under `outputs/`:
+   - `report.pdf` containing the console report plus embedded plots
    - Hour-of-day coverage stacked bars
    - Best objective vs. solver bound (line plot) with elapsed-time overlay
+   - Hourly and daily shift CSVs plus a sample Gantt figure
 
 Everything is deterministic as long as you keep the default seeds in `Config` and `StaffGenConfig`.
+
+---
+
+## 🧪 Example CLI (`src/example.py`)
+
+Want a ready-made demo? Run the bundled CLI:
+
+```bash
+python -m src.example --option 1  # or 2 / 3
+```
+
+Options:
+
+| Option | Description |
+| --- | --- |
+| `1` | Synthetic staff generated from the current `Config`. |
+| `2` | Staff defined in code explicitly for a tiny two-person scenario. |
+| `3` | Loads `src/example_staff.json` (50 people with various skills) and applies realistic skill minima + a lightweight rule template. This is most similar to a production example. |
 
 ---
 
@@ -107,11 +126,11 @@ Key rule highlights:
 
 1. **Progress callback** – every `LOG_SOLUTIONS_FREQUENCY_SECONDS`:
    ```text
-   [  3.0s] pct= 20.00% | best=12,345 | ratio=1.050 | sols=3
+   [  3.0s] pct of time limit=20.00% | best=12,345 | ratio=1.050 | sols=3
    ```
-   - `pct` = elapsed time vs. limit
+   - `pct of time limit` = elapsed time vs. limit
    - `best` = best objective found so far (penalty total)
-   - `ratio` = |best| / |solver bound| (closer to 1 → proven optimal)
+   - `ratio` = best / solver bound (closer to 1 → proven optimal)
    - `sols` = solution count
 
 2. **Saved history** – `MinimalProgress.solution_history()` feeds the reporter so we can produce a *Solution progress plot*
@@ -122,7 +141,18 @@ Key rule highlights:
    - Slot-gap table for headcount shortfalls
    - Objective value, fairness metrics, consecutive-day summaries
 
-4. **Plots directory** – each run creates `figures/hour_of_day_hist.png` and `figures/solution_progress.png`. Remove or archive them between runs if you want a clean slate.
+4. **Outputs** – `produce_outputs()` saves artefacts under `outputs/`:
+   - `report.pdf` (text report + embedded plots)
+   - `shifts_hourly.csv` / `shifts_daily.csv`
+   - `example_shifts_gantt.png` (hourly Gantt using up to 10 random staff)
+   - Additional plots mirrored below for reference:
+     - Hour-of-day coverage:<br>
+       <p><img src="src/example_hour_of_day_skill_bar_chart.png" width="420" alt="Hour-of-day coverage" /></p>
+     - Solver progress:<br>
+       <p><img src="src/example_solution_progress.png" width="420" alt="Solver progress" /></p>
+     - Sample hourly Gantt:<br>
+       <p><img src="outputs/example_shifts_gantt.png" width="420" alt="Sample Gantt" /></p>
+   Remove or archive them between runs if you want a clean slate.
 
 ---
 
@@ -194,6 +224,7 @@ Once satisfied, bump the real PyPI release separately (outside this repo’s aut
 | Build/solve orchestration | `src/rostering/model.py` |
 | Constraint rules | `src/rostering/rules/` |
 | Progress callback | `src/rostering/progress.py` |
+| Programmatic entry point | `rostering.run_solver` |
 | Reporting | `src/rostering/reporting/` |
 
 Happy rostering! 🗓️

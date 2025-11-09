@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
+from datetime import datetime
 
+import matplotlib
 import pandas as pd
 
+matplotlib.use("Agg", force=True)
+from rostering.config import Config
 from rostering.input_data import InputData
 from rostering.reporting.adapters import ResultAdapter
 from rostering.reporting.plots import (
     show_hour_of_day_histograms,
     show_solution_progress,
 )
+from rostering.staff import Staff
 
 
 class TinyAdapter(ResultAdapter):
@@ -38,14 +42,37 @@ class TinyAdapter(ResultAdapter):
         return pd.DataFrame()
 
 
-def make_cfg():
-    return SimpleNamespace(DAYS=1, HOURS=2, SKILL_MIN=[[{"A": 1}, {"A": 1}]])
+def make_cfg() -> Config:
+    cfg = Config(
+        N=1,
+        DAYS=1,
+        HOURS=24,
+        START_DATE=datetime(2024, 1, 1),
+        MIN_SHIFT_HOURS=1,
+        MAX_SHIFT_HOURS=1,
+        REST_HOURS=0,
+        TIME_LIMIT_SEC=1.0,
+        NUM_PARALLEL_WORKERS=1,
+        LOG_SOLUTIONS_FREQUENCY_SECONDS=1.0,
+    )
+    cfg.SKILL_MIN = [[{"A": 1} for _ in range(cfg.HOURS)]]
+    return cfg
 
 
 def make_data():
-    staff = [SimpleNamespace(skills={"A"}, holidays=set())]
-    allowed = [[True] * 24]
-    return InputData(staff=staff, allowed=allowed, is_weekend=[False])
+    staff = [
+        Staff(
+            id=0,
+            name="A",
+            band=1,
+            skills=["A"],
+            is_night_worker=False,
+            max_consec_days=None,
+        )
+    ]
+    cfg = make_cfg()
+    allowed = [[True] * cfg.HOURS]
+    return InputData(staff=staff, cfg=cfg, allowed=allowed)
 
 
 def test_hour_of_day_histogram_saves(monkeypatch):

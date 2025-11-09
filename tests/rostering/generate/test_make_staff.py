@@ -1,18 +1,25 @@
 from __future__ import annotations
 
+import json
+from datetime import date
+from pathlib import Path
+
 import numpy as np
 import pytest
 
-from rostering.generate.staff import (
-    Staff,
+import rostering.generate.make_staff as staff_mod
+from rostering.config import Config
+from rostering.generate.make_staff import (
     StaffGenConfig,
     _deterministic_counts,
     allowed_hours_for_staff,
     assign_time_off,
     build_allowed_matrix,
     create_staff,
+    staff_from_json,
     staff_summary,
 )
+from rostering.staff import Staff
 
 
 def test_deterministic_counts_respects_total_and_rounding():
@@ -78,10 +85,19 @@ def test_assign_time_off_never_overlaps(days: int = 5):
     """
     cfg = StaffGenConfig(n=2, seed=0)
     staff = create_staff(cfg)
-    assign_time_off(staff, days=days, holiday_rate=0.6, pref_off_rate=0.6, seed=1)
+    start = date(2024, 1, 1)
+    assign_time_off(
+        staff,
+        days=days,
+        holiday_rate=0.6,
+        pref_off_rate=0.6,
+        start_date=start,
+        seed=1,
+    )
     for s in staff:
-        assert s.holidays.isdisjoint(s.pref_off)
-        assert all(0 <= d < days for d in s.holidays | s.pref_off)
+        assert s.holidays.isdisjoint(s.preferred_off)
+        assert all(isinstance(d, date) for d in s.holidays | s.preferred_off)
+        assert all(0 <= (d - start).days < days for d in s.holidays | s.preferred_off)
 
 
 def test_allowed_hours_day_vs_night_workers():
@@ -97,7 +113,7 @@ def test_allowed_hours_day_vs_night_workers():
         band=1,
         skills=["ANY"],
         is_night_worker=False,
-        consec_cap=None,
+        max_consec_days=None,
     )
     night_worker = Staff(
         id=1,
@@ -105,7 +121,7 @@ def test_allowed_hours_day_vs_night_workers():
         band=1,
         skills=["ANY"],
         is_night_worker=True,
-        consec_cap=None,
+        max_consec_days=None,
     )
 
     day_mask = allowed_hours_for_staff(day_worker)
@@ -134,7 +150,7 @@ def test_build_allowed_matrix_matches_individual_masks():
             band=1,
             skills=["ANY"],
             is_night_worker=False,
-            consec_cap=None,
+            max_consec_days=None,
         ),
         Staff(
             id=1,
@@ -142,10 +158,10 @@ def test_build_allowed_matrix_matches_individual_masks():
             band=1,
             skills=["ANY"],
             is_night_worker=True,
-            consec_cap=None,
+            max_consec_days=None,
         ),
     ]
-    cfg = StaffGenConfig(n=2)
+    cfg = Config(N=2)
     mat = build_allowed_matrix(workers, cfg)
     assert mat.shape == (2, 24)
     assert np.array_equal(mat[0], allowed_hours_for_staff(workers[0]))
@@ -167,7 +183,7 @@ def test_staff_summary_returns_expected_fractions():
             band=1,
             skills=["ANY", "A"],
             is_night_worker=False,
-            consec_cap=None,
+            max_consec_days=None,
         ),
         Staff(
             id=1,
@@ -175,7 +191,7 @@ def test_staff_summary_returns_expected_fractions():
             band=2,
             skills=["ANY", "B", "SENIOR"],
             is_night_worker=True,
-            consec_cap=4,
+            max_consec_days=4,
         ),
     ]
     summary = staff_summary(workers)
@@ -187,3 +203,67 @@ def test_staff_summary_returns_expected_fractions():
     assert summary["senior_pct"] == 0.5
     assert summary["night_pct"] == 0.5
     assert summary["capped_pct"] == 0.5
+
+
+def _write_staff_file(path: Path, entries: list[dict]) -> Path:
+    path.write_text(json.dumps(entries))
+    return path
+
+
+def test_staff_from_json_reads_custom_file(tmp_path):
+    path = _write_staff_file(
+        tmp_path / "custom.json",
+        [
+            {
+                "id": 1,
+                "name": "Alice",
+                "band": 2,
+                "skills": ["A"],
+                "is_night_worker": True,
+                "max_consec_days": 4,
+                "holidays": ["2024-01-02"],
+                "preferred_off": ["2024-01-03"],
+            },
+            {
+                "id": 2,
+                "name": "Bob",
+                "band": 1,
+                "skills": ["B"],
+            },
+        ],
+    )
+    staff = staff_from_json(path)
+    assert [s.name for s in staff] == ["Alice", "Bob"]
+    assert staff[0].holidays == {date.fromisoformat("2024-01-02")}
+    assert staff[0].preferred_off == {date.fromisoformat("2024-01-03")}
+    assert staff[1].max_consec_days is None
+
+
+def test_staff_from_json_uses_default_file_when_omitted(monkeypatch, tmp_path):
+    default = tmp_path / "default.json"
+    _write_staff_file(
+        default,
+        [
+            {
+                "id": 5,
+                "name": "Default",
+                "band": 3,
+                "skills": ["X"],
+            }
+        ],
+    )
+    monkeypatch.setattr(staff_mod, "DEFAULT_STAFF_JSON", default)
+    staff = staff_from_json()
+    assert len(staff) == 1
+    assert staff[0].name == "Default"
+
+
+def test_staff_from_json_requires_json_file(tmp_path):
+    bad_path = tmp_path / "not_json.txt"
+    bad_path.write_text("[]")
+    with pytest.raises(ValueError):
+        staff_from_json(bad_path)
+
+    missing = tmp_path / "missing.json"
+    with pytest.raises(FileNotFoundError):
+        staff_from_json(missing)

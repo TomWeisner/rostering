@@ -23,8 +23,8 @@ class RestRule(Rule):
     order = 50
     name = "Rest"
 
-    def __init__(self, model):
-        super().__init__(model)
+    def __init__(self, model, **settings):
+        super().__init__(model, **settings)
         self.enabled = model.cfg.REST_HOURS > 0  # disable with 0
 
     def add_hard(self):
@@ -34,19 +34,11 @@ class RestRule(Rule):
 
         for e in range(C.N):
             for d in range(C.DAYS - 1):
-                # Hard constraint active only if both days have shifts
+                lits = [self.model.y[(e, d)], self.model.y[(e, d + 1)]]
+                lit = self._assumption_literal(f"REST{C.REST_HOURS}[e={e},d={d}]")
+                if lit is not None:
+                    lits.append(lit)
                 M.Add(
                     self.model.S[(e, d + 1)]
                     >= C.REST_HOURS + self.model.S[(e, d)] + self.model.L[(e, d)] - 24
-                ).OnlyEnforceIf([self.model.y[(e, d)], self.model.y[(e, d + 1)]])
-
-                # Mirrored copy for readable UNSAT core (optional)
-                if C.ENABLE_UNSAT_CORE:
-                    a = self.model.add_assumption(f"REST{C.REST_HOURS}[e={e},d={d}]")
-                    M.Add(
-                        self.model.S[(e, d + 1)]
-                        >= C.REST_HOURS
-                        + self.model.S[(e, d)]
-                        + self.model.L[(e, d)]
-                        - 24
-                    ).OnlyEnforceIf([self.model.y[(e, d)], self.model.y[(e, d + 1)], a])
+                ).OnlyEnforceIf(lits)

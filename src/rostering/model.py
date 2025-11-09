@@ -1,6 +1,9 @@
 # rostering/model.py
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Optional, Sequence, Type
+
 import pandas as pd
 
 from rostering.build import build_model
@@ -13,8 +16,24 @@ from rostering.extract import (
 )
 from rostering.input_data import InputData
 from rostering.precheck import precheck_availability
-from rostering.result_types import SolveResult
+from rostering.rules.base import Rule, RuleSpec
 from rostering.solver import solve_model
+
+
+@dataclass
+class SolveResult:
+    """Structured output of a solve run."""
+
+    status_name: str
+    objective_value: Optional[float]
+    df_sched: pd.DataFrame
+    df_shifts: pd.DataFrame
+    df_emp: pd.DataFrame
+    avg_run: float
+    max_run: float
+    unsat_core_groups: dict[str, list[str]]
+    progress_history: list[tuple[float, float, float]] | None = None
+    solver_stats: str | None = None
 
 
 class RosterModel:
@@ -26,10 +45,17 @@ class RosterModel:
       - extraction helpers -> pandas DataFrames + summary stats
     """
 
-    def __init__(self, cfg: Config, data: InputData):
+    def __init__(
+        self,
+        cfg: Config,
+        data: InputData,
+        rules: Sequence[RuleSpec | Type[Rule]] | None = None,
+    ):
         self.cfg = cfg
         self.data = data
         self._ctx = None  # populated by build()
+        self._model_stats: str | None = None
+        self._rule_specs = rules
 
     # ---------- Precheck ----------
     def precheck(self):
@@ -42,7 +68,12 @@ class RosterModel:
           1) declare_vars  2) add_hard  3) add_soft  4) contribute_objective
         Then attach the final objective and run sanity checks.
         """
-        self._ctx = build_model(self.cfg, self.data)
+        self._ctx = build_model(self.cfg, self.data, rules=self._rule_specs)
+        if hasattr(self._ctx, "m"):
+            try:
+                self._model_stats = self._ctx.m.ModelStats()
+            except AttributeError:
+                self._model_stats = None
 
     # ---------- Solve ----------
     def solve(self, progress_cb=None) -> SolveResult:
@@ -70,6 +101,7 @@ class RosterModel:
         solver, status_name, unsat_groups = solve_model(
             self._ctx, progress_cb=progress_cb
         )
+        solver_stats = solver.ResponseStats()
 
         progress_history = None
         if progress_cb is not None:
@@ -92,6 +124,7 @@ class RosterModel:
                 max_run=0.0,
                 unsat_core_groups=unsat_groups,
                 progress_history=progress_history,
+                solver_stats=solver_stats,
             )
 
         # Non-final status (e.g., UNKNOWN) — still return what we can
@@ -106,6 +139,7 @@ class RosterModel:
                 {},
                 unsat_core_groups=unsat_groups,
                 progress_history=progress_history,
+                solver_stats=solver_stats,
             )
 
         # Extract results
@@ -126,9 +160,13 @@ class RosterModel:
             max_run=max_run,
             unsat_core_groups={},
             progress_history=progress_history,
+            solver_stats=solver_stats,
         )
 
     def get_report_descriptors(self) -> list[dict]:
         if self._ctx is None:
             raise RuntimeError("Call build() before get_report_descriptors().")
         return self._ctx.report_descriptors()
+
+    def model_stats(self) -> str | None:
+        return self._model_stats

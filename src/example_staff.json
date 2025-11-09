@@ -1,0 +1,760 @@
+[
+  {
+    "id": 0,
+    "name": "Iris",
+    "band": 1,
+    "skills": [
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 4,
+    "holidays": [
+      "2024-01-13"
+    ],
+    "preferred_off": [
+      "2024-01-01"
+    ]
+  },
+  {
+    "id": 1,
+    "name": "Carol",
+    "band": 1,
+    "skills": [
+      "Python",
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-06"
+    ],
+    "preferred_off": [
+      "2024-01-04",
+      "2024-01-09"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Miranda",
+    "band": 1,
+    "skills": [
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-02"
+    ],
+    "preferred_off": [
+      "2024-01-02",
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Katie",
+    "band": 1,
+    "skills": [],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-08",
+      "2024-01-08"
+    ],
+    "preferred_off": [
+      "2024-01-01",
+      "2024-01-05"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Doreen",
+    "band": 1,
+    "skills": [
+      "Python"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-08",
+      "2024-01-14"
+    ],
+    "preferred_off": [
+      "2024-01-04"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Chanel",
+    "band": 1,
+    "skills": [
+      "Python"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 5,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 6,
+    "name": "Sophia",
+    "band": 1,
+    "skills": [
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-09"
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Mike",
+    "band": 1,
+    "skills": [],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-09",
+      "2024-01-10"
+    ],
+    "preferred_off": [
+      "2024-01-08"
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Gerald",
+    "band": 1,
+    "skills": [
+      "Python",
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 9,
+    "name": "Noel",
+    "band": 1,
+    "skills": [],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 10,
+    "name": "Mia",
+    "band": 1,
+    "skills": [
+      "Python",
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [
+      "2024-01-04",
+      "2024-01-13"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 11,
+    "name": "Noelle",
+    "band": 1,
+    "skills": [
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-11",
+      "2024-01-12"
+    ],
+    "preferred_off": [
+      "2024-01-02"
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Darian",
+    "band": 1,
+    "skills": [
+      "First Aid"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 13,
+    "name": "Joe",
+    "band": 1,
+    "skills": [
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-14"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 14,
+    "name": "Curtis",
+    "band": 1,
+    "skills": [
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 15,
+    "name": "Lilly",
+    "band": 1,
+    "skills": [
+      "First Aid"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 16,
+    "name": "Renee",
+    "band": 1,
+    "skills": [
+      "Python"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-01",
+      "2024-01-13"
+    ]
+  },
+  {
+    "id": 17,
+    "name": "Morgan",
+    "band": 1,
+    "skills": [
+      "Python",
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 18,
+    "name": "Janice",
+    "band": 1,
+    "skills": [
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-02",
+      "2024-01-12"
+    ],
+    "preferred_off": [
+      "2024-01-04"
+    ]
+  },
+  {
+    "id": 19,
+    "name": "Emily",
+    "band": 1,
+    "skills": [],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [
+      "2024-01-04",
+      "2024-01-11"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 20,
+    "name": "Gina",
+    "band": 1,
+    "skills": [],
+    "is_night_worker": true,
+    "max_consec_days": 4,
+    "holidays": [
+      "2024-01-01",
+      "2024-01-03"
+    ],
+    "preferred_off": [
+      "2024-01-11"
+    ]
+  },
+  {
+    "id": 21,
+    "name": "Joanna",
+    "band": 1,
+    "skills": [
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-14"
+    ],
+    "preferred_off": [
+      "2024-01-03",
+      "2024-01-05"
+    ]
+  },
+  {
+    "id": 22,
+    "name": "Lance",
+    "band": 1,
+    "skills": [
+      "First Aid"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-03",
+      "2024-01-05"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 23,
+    "name": "Warren",
+    "band": 1,
+    "skills": [
+      "Python",
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-05",
+      "2024-01-07"
+    ],
+    "preferred_off": [
+      "2024-01-07",
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 24,
+    "name": "Clarence",
+    "band": 1,
+    "skills": [
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-07",
+      "2024-01-08"
+    ]
+  },
+  {
+    "id": 25,
+    "name": "Drew",
+    "band": 2,
+    "skills": [
+      "Python"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 5,
+    "holidays": [
+      "2024-01-01",
+      "2024-01-12"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 26,
+    "name": "Jose",
+    "band": 2,
+    "skills": [],
+    "is_night_worker": true,
+    "max_consec_days": 5,
+    "holidays": [
+      "2024-01-10",
+      "2024-01-13"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 27,
+    "name": "Maura",
+    "band": 2,
+    "skills": [
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-02",
+      "2024-01-11"
+    ]
+  },
+  {
+    "id": 28,
+    "name": "Eliana",
+    "band": 2,
+    "skills": [
+      "First Aid"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 29,
+    "name": "Jerry",
+    "band": 2,
+    "skills": [],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 30,
+    "name": "Anika",
+    "band": 2,
+    "skills": [
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 31,
+    "name": "Mitchell",
+    "band": 2,
+    "skills": [],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-03"
+    ],
+    "preferred_off": [
+      "2024-01-09",
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 32,
+    "name": "Pat",
+    "band": 2,
+    "skills": [
+      "First Aid"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 33,
+    "name": "Shannon",
+    "band": 2,
+    "skills": [
+      "Python"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-10",
+      "2024-01-12"
+    ],
+    "preferred_off": [
+      "2024-01-08",
+      "2024-01-12"
+    ]
+  },
+  {
+    "id": 34,
+    "name": "Chelsea",
+    "band": 2,
+    "skills": [
+      "Python",
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-10"
+    ]
+  },
+  {
+    "id": 35,
+    "name": "Marion",
+    "band": 2,
+    "skills": [
+      "Python",
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-02",
+      "2024-01-06"
+    ],
+    "preferred_off": [
+      "2024-01-01",
+      "2024-01-01"
+    ]
+  },
+  {
+    "id": 36,
+    "name": "Nicholas",
+    "band": 2,
+    "skills": [
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-02"
+    ],
+    "preferred_off": [
+      "2024-01-12"
+    ]
+  },
+  {
+    "id": 37,
+    "name": "Ingrid",
+    "band": 2,
+    "skills": [
+      "First Aid"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [
+      "2024-01-07"
+    ],
+    "preferred_off": [
+      "2024-01-05"
+    ]
+  },
+  {
+    "id": 38,
+    "name": "Tia",
+    "band": 2,
+    "skills": [],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-02"
+    ]
+  },
+  {
+    "id": 39,
+    "name": "Meghan",
+    "band": 1,
+    "skills": [
+      "Python"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": null,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-07",
+      "2024-01-10"
+    ]
+  },
+  {
+    "id": 40,
+    "name": "Roman",
+    "band": 1,
+    "skills": [
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-01"
+    ],
+    "preferred_off": []
+  },
+  {
+    "id": 41,
+    "name": "Sheila",
+    "band": 1,
+    "skills": [
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-02"
+    ],
+    "preferred_off": [
+      "2024-01-04"
+    ]
+  },
+  {
+    "id": 42,
+    "name": "Lucas",
+    "band": 2,
+    "skills": [
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": null,
+    "holidays": [
+      "2024-01-01",
+      "2024-01-09"
+    ],
+    "preferred_off": [
+      "2024-01-13"
+    ]
+  },
+  {
+    "id": 43,
+    "name": "Brayden",
+    "band": 3,
+    "skills": [
+      "Python"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-02",
+      "2024-01-03"
+    ]
+  },
+  {
+    "id": 44,
+    "name": "Jody",
+    "band": 3,
+    "skills": [
+      "Python",
+      "First Aid",
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-07",
+      "2024-01-11"
+    ]
+  },
+  {
+    "id": 45,
+    "name": "Christie",
+    "band": 3,
+    "skills": [
+      "Python",
+      "First Aid"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 4,
+    "holidays": [
+      "2024-01-08"
+    ],
+    "preferred_off": [
+      "2024-01-11",
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 46,
+    "name": "Shari",
+    "band": 3,
+    "skills": [
+      "Python",
+      "First Aid"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [
+      "2024-01-01"
+    ],
+    "preferred_off": [
+      "2024-01-03",
+      "2024-01-14"
+    ]
+  },
+  {
+    "id": 47,
+    "name": "Gertrude",
+    "band": 3,
+    "skills": [
+      "Python",
+      "First Aid"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 4,
+    "holidays": [],
+    "preferred_off": []
+  },
+  {
+    "id": 48,
+    "name": "Yvette",
+    "band": 1,
+    "skills": [
+      "Python",
+      "First Aid"
+    ],
+    "is_night_worker": false,
+    "max_consec_days": 5,
+    "holidays": [],
+    "preferred_off": [
+      "2024-01-06"
+    ]
+  },
+  {
+    "id": 49,
+    "name": "Amelie",
+    "band": 1,
+    "skills": [
+      "Senior"
+    ],
+    "is_night_worker": true,
+    "max_consec_days": 3,
+    "holidays": [
+      "2024-01-01",
+      "2024-01-09"
+    ],
+    "preferred_off": [
+      "2024-01-02",
+      "2024-01-11"
+    ]
+  }
+]

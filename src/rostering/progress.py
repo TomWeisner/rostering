@@ -26,7 +26,7 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
             print_msg = (
                 "\nbest: objective value (sum of penalties) of best solution found so far\n"
                 "optimal: estimate of lowest possible objective value\n"
-                "ratio: |best| / |optimal| (shows how far current best is from solver bound)\n\n"
+                "ratio: best / optimal (shows how far current best is from solver bound)\n\n"
             )
             print(print_msg)
             self.has_performed_initial_print = True
@@ -38,7 +38,7 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
 
         if self.last_time < 0 or (now - self.last_time) >= self.log_every:
             if not self._printed_optimal_once:
-                print(f"Solver optimal lower bound: {bound:,.0f}")
+                print(f"Solver potential optimal: {bound:,.0f}\n")
                 self._printed_optimal_once = True
 
             best_str = f"{best:,.0f}"
@@ -47,7 +47,7 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
 
             if abs(bound) > 1e-9:
                 ratio_val = abs(best) / max(1e-9, abs(bound))
-                ratio_str = f"{ratio_val:.3f}"
+                ratio_str = f"{ratio_val:,.2f}"
             else:
                 ratio_str = "n/a"
             self._ratio_field_width = max(self._ratio_field_width, len(ratio_str))
@@ -55,11 +55,11 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
 
             if self.time_limit:
                 pct_val = min(100.0, 100.0 * now / self.time_limit)
-                pct_field = f"{pct_val:6.2f}%"
+                pct_field = f"{pct_val:4.1f}%"
             else:
                 pct_field = "  n/a "
             print(
-                f"[{now:6.1f}s] pct={pct_field} | best={best_field} | ratio={ratio_field} | sols={self.sols:<5.0f}",
+                f"[{now:6.1f}s] pct of time limit={pct_field} | best={best_field} | ratio={ratio_field} | sols={self.sols:<5.0f}",
                 flush=True,
             )
             self.last_time = now

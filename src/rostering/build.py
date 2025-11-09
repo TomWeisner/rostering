@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, Type
 
 from ortools.sat.python import cp_model
 
 from rostering.config import Config
 from rostering.input_data import InputData
-from rostering.rules.base import Rule
+from rostering.rules.base import Rule, RuleSpec
 from rostering.rules.objective import ObjectiveBuilder
-from rostering.rules.registry import RULE_REGISTRY
+from rostering.rules.registry import normalize_rule_specs
 
 # Type aliases for readability
 ED = Tuple[int, int]  # (employee, day)
@@ -32,7 +32,7 @@ class BuildContext:
         self.L: dict[ED, cp_model.IntVar] = {}  # length (MIN..MAX)
         self.x: dict[EDH, cp_model.IntVar] = {}  # worked at hour h
         self.z: dict[ED, cp_model.IntVar] = {}  # worked any hour that day
-        self.runlen: dict[ED, cp_model.IntVar] = {}  # running day-count
+        self.consec_days_worked: dict[ED, cp_model.IntVar] = {}
 
         # lists of realized hour bits used for min-shift-length constraints
         self.w_cur_list: dict[ED, list[cp_model.IntVar]] = {}
@@ -65,7 +65,11 @@ class BuildContext:
         return out
 
 
-def build_model(cfg: Config, data: InputData) -> BuildContext:
+def build_model(
+    cfg: Config,
+    data: InputData,
+    rules: Sequence[RuleSpec | Type[Rule]] | None = None,
+) -> BuildContext:
     """
     Build the CP-SAT model by running each registered Rule through the 4 phases:
       1) declare_vars  2) add_hard  3) add_soft  4) contribute_objective
@@ -74,7 +78,27 @@ def build_model(cfg: Config, data: InputData) -> BuildContext:
     ctx = BuildContext(cfg, data)
 
     # Build sequence from registry
-    ctx._rules = RULE_REGISTRY.build_sequence(ctx=ctx)
+    specs = normalize_rule_specs(rules)
+    ctx._rules = []
+    for spec in specs:
+        if not spec.enabled:
+            continue
+        settings = dict(spec.settings) if spec.settings else {}
+        rule = spec.cls(ctx, **settings)
+        if spec.order is not None:
+            rule.order = spec.order
+        ctx._rules.append(rule)
+
+    ctx._rules.sort(key=lambda r: r.order)
+
+    print("SOLVER CONFIGURATION:")
+    print(f"\nN={ctx.cfg.N:,} employees to be assigned shifts")
+    print(
+        f"D={ctx.cfg.DAYS:,} days to be covered, {ctx.cfg.HOURS:,} hours per day = "
+        f"{ctx.cfg.DAYS * ctx.cfg.HOURS:,} slots"
+    )
+    print(f"R={len(ctx._rules):,} rules enabled")
+    print(f"P={ctx.cfg.NUM_PARALLEL_WORKERS:,} parallel computes\n")
 
     # Phase 1: variables
     for r in ctx._rules:

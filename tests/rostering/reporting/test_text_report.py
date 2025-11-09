@@ -1,27 +1,48 @@
 from __future__ import annotations
 
+from datetime import datetime
 from types import SimpleNamespace
 
 import pandas as pd
 
+from rostering.config import Config
 from rostering.input_data import InputData
 from rostering.reporting.adapters import PandasResultAdapter
 from rostering.reporting.text_report import render_text_report
+from rostering.staff import Staff
 
 
 def make_cfg():
-    return SimpleNamespace(
+    cfg = Config(
+        N=1,
         DAYS=1,
-        HOURS=1,
+        HOURS=24,
+        START_DATE=datetime(2024, 1, 1),
+        MIN_SHIFT_HOURS=1,
+        MAX_SHIFT_HOURS=1,
+        REST_HOURS=0,
+        TIME_LIMIT_SEC=1.0,
+        NUM_PARALLEL_WORKERS=1,
+        LOG_SOLUTIONS_FREQUENCY_SECONDS=1.0,
         WEEKLY_MAX_HOURS=10,
-        SKILL_MIN=[[{"A": 1}]],
     )
+    cfg.SKILL_MIN = [[{"A": 1} for _ in range(cfg.HOURS)]]
+    return cfg
 
 
 def make_data():
-    staff = [SimpleNamespace(skills={"A"}, holidays=set())]
-    allowed = [[True] * 24]
-    return InputData(staff=staff, allowed=allowed, is_weekend=[False])
+    staff = [
+        Staff(
+            id=0,
+            name="A",
+            band=1,
+            skills=["A"],
+            is_night_worker=False,
+            max_consec_days=None,
+        )
+    ]
+    cfg = make_cfg()
+    return InputData(staff=staff, cfg=cfg)
 
 
 def make_result(status: str = "FEASIBLE"):

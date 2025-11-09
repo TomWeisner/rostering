@@ -1,4 +1,5 @@
 from rostering.rules.base import Rule
+from rostering.rules.helpers import ensure_total_hours
 
 
 class WeeklyCapRule(Rule):
@@ -12,8 +13,8 @@ class WeeklyCapRule(Rule):
     order = 70
     name = "WeeklyCap"
 
-    def __init__(self, model):
-        super().__init__(model)
+    def __init__(self, model, **settings):
+        super().__init__(model, **settings)
         self.enabled = (
             model.cfg.WEEKLY_MAX_HOURS is not None
         )  # toggle by setting to None
@@ -23,9 +24,8 @@ class WeeklyCapRule(Rule):
             return
         C, M = self.model.cfg, self.model.m
         cap = int(C.WEEKLY_MAX_HOURS)
+        get_total = ensure_total_hours(self, int(C.DAYS * C.HOURS))
         for e in range(C.N):
-            total = sum(
-                self.model.x[(e, d, h)] for d in range(C.DAYS) for h in range(C.HOURS)
-            )
+            total = get_total(e)
             ct = M.Add(total <= cap)
             self._guard(ct, f"WEEKLY-CAP[e={e}]")

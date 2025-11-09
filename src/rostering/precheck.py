@@ -68,7 +68,10 @@ def _capacity_upper_bound_people_hours(cfg: Config, data: InputData) -> int:
         allowed_mask = np.ones((N, H), dtype=bool)
     else:
         allowed_mask = np.asarray(allowed, dtype=bool)
-        assert allowed_mask.shape == (N, H), "allowed must be shape (N, HOURS)"
+        assert allowed_mask.shape == (
+            N,
+            H,
+        ), f"allowed must be shape (N, HOURS), got shape {allowed_mask.shape!r}"
 
     per_emp_allowed_per_day = allowed_mask.sum(axis=1)  # shape (N,)
 
