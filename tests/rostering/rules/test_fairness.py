@@ -5,22 +5,9 @@ from types import SimpleNamespace
 from ortools.sat.python import cp_model
 
 from rostering.config import Config
-from rostering.generate.staff import Staff
 from rostering.input_data import InputData
-from rostering.rules.band_shortfall import BandShortfallPenaltyRule
-
-
-def _make_staff_member(idx: int, band: int) -> Staff:
-    return Staff(
-        id=idx,
-        name=f"Staff {idx}",
-        band=band,
-        skills=["ANY"],
-        is_night_worker=False,
-        max_consec_days=None,
-        holidays=set(),
-        preferred_off=set(),
-    )
+from rostering.rules.fairness import FairnessRule
+from rostering.staff import Staff
 
 
 def _make_ctx() -> SimpleNamespace:
@@ -36,9 +23,9 @@ def _make_ctx() -> SimpleNamespace:
         LOG_SOLUTIONS_FREQUENCY_SECONDS=1.0,
     )
     staff = [
-        _make_staff_member(0, band=1),
-        _make_staff_member(1, band=2),
-        _make_staff_member(2, band=3),
+        Staff(id=0, name="Ben", band=1, skills=["ANY"]),
+        Staff(id=1, name="Harry", band=2, skills=["ANY"]),
+        Staff(id=2, name="Luke", band=3, skills=["ANY"]),
     ]
     allowed = [[True for _ in range(cfg.HOURS)] for _ in range(cfg.N)]
     data = InputData(staff=staff, cfg=cfg, allowed=allowed)
@@ -54,14 +41,20 @@ def _make_ctx() -> SimpleNamespace:
     return SimpleNamespace(cfg=cfg, data=data, m=model, x=x)
 
 
-def test_band_shortfall_penalty_adds_terms_for_high_bands():
+def test_fairness_adds_band_penalties_for_high_band_staff():
     ctx = _make_ctx()
-    rule = BandShortfallPenaltyRule(
+    rule = FairnessRule(
         ctx,
-        base=1.3,
+        base=1.2,
         scale=1.0,
-        band_base=1.25,
+        max_deviation_hours=2,
+        band_shortfall_base=1.25,
+        band_shortfall_scale=0.5,
+        band_shortfall_max_gap=2,
+        band_shortfall_threshold=1,
     )
     terms = rule.contribute_objective()
-    assert terms, "Expected penalty terms to be generated for high-band staff."
-    assert len(terms) == 2  # one penalty per high-band employee
+    # Base fairness adds two terms per employee (dev + penalty)
+    base_terms = ctx.cfg.N * 2
+    # Threshold is inclusive, so all three bands receive an extra penalty term.
+    assert len(terms) == base_terms + ctx.cfg.N

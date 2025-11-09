@@ -5,18 +5,18 @@ from pathlib import Path
 from typing import Any
 
 from rostering.input_data import InputData
+from rostering.model import SolveResult
 from rostering.reporting.adapters import PandasResultAdapter, ResultAdapter
+from rostering.reporting.model_stats import format_model_stats, format_solver_stats
 from rostering.reporting.plots import (
     show_hour_of_day_histograms,
     show_solution_progress,
 )
-from rostering.reporting.stats import format_model_stats, format_solver_stats
 from rostering.reporting.text_report import (
     ReportDocument,
     render_text_report,
     set_active_report,
 )
-from rostering.result_types import SolveResult
 
 
 class Reporter:

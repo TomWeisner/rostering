@@ -10,7 +10,6 @@ import pytest
 import rostering.generate.staff as staff_mod
 from rostering.config import Config
 from rostering.generate.staff import (
-    Staff,
     StaffGenConfig,
     _deterministic_counts,
     allowed_hours_for_staff,
@@ -20,6 +19,7 @@ from rostering.generate.staff import (
     staff_from_json,
     staff_summary,
 )
+from rostering.staff import Staff
 
 
 def test_deterministic_counts_respects_total_and_rounding():

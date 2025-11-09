@@ -144,7 +144,7 @@ Key rule highlights:
    ```
    - `pct of time limit` = elapsed time vs. limit
    - `best` = best objective found so far (penalty total)
-   - `ratio` = |best| / |solver bound| (closer to 1 → proven optimal)
+   - `ratio` = best / solver bound (closer to 1 → proven optimal)
    - `sols` = solution count
 
 2. **Saved history** – `MinimalProgress.solution_history()` feeds the reporter so we can produce a *Solution progress plot*

@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from rostering.config import Config
-from rostering.generate.staff import Staff
 from rostering.input_data import InputData
 from rostering.main import run_solver
+from rostering.staff import Staff
 
 
 def test_max_consecutive_days_rule_enforces_employee_cap():

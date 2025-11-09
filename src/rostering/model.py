@@ -1,7 +1,8 @@
 # rostering/model.py
 from __future__ import annotations
 
-from typing import Sequence, Type
+from dataclasses import dataclass
+from typing import Optional, Sequence, Type
 
 import pandas as pd
 
@@ -15,9 +16,24 @@ from rostering.extract import (
 )
 from rostering.input_data import InputData
 from rostering.precheck import precheck_availability
-from rostering.result_types import SolveResult
 from rostering.rules.base import Rule, RuleSpec
 from rostering.solver import solve_model
+
+
+@dataclass
+class SolveResult:
+    """Structured output of a solve run."""
+
+    status_name: str
+    objective_value: Optional[float]
+    df_sched: pd.DataFrame
+    df_shifts: pd.DataFrame
+    df_emp: pd.DataFrame
+    avg_run: float
+    max_run: float
+    unsat_core_groups: dict[str, list[str]]
+    progress_history: list[tuple[float, float, float]] | None = None
+    solver_stats: str | None = None
 
 
 class RosterModel:

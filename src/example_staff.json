@@ -581,7 +581,7 @@
   {
     "id": 39,
     "name": "Ali",
-    "band": 2,
+    "band": 1,
     "skills": [
       "Python"
     ],
@@ -596,7 +596,7 @@
   {
     "id": 40,
     "name": "Alice",
-    "band": 2,
+    "band": 1,
     "skills": [
       "First Aid",
       "Senior"
@@ -611,7 +611,7 @@
   {
     "id": 41,
     "name": "Alicia",
-    "band": 2,
+    "band": 1,
     "skills": [
       "First Aid",
       "Senior"
@@ -727,7 +727,7 @@
   {
     "id": 48,
     "name": "Allyson",
-    "band": 3,
+    "band": 1,
     "skills": [
       "Python",
       "First Aid"
@@ -742,7 +742,7 @@
   {
     "id": 49,
     "name": "Alma",
-    "band": 3,
+    "band": 1,
     "skills": [
       "Senior"
     ],

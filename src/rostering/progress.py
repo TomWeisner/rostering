@@ -38,7 +38,7 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
 
         if self.last_time < 0 or (now - self.last_time) >= self.log_every:
             if not self._printed_optimal_once:
-                print(f"Solver optimal lower bound: {bound:,.0f}")
+                print(f"Solver potential optimal: {bound:,.0f}\n")
                 self._printed_optimal_once = True
 
             best_str = f"{best:,.0f}"
@@ -55,11 +55,11 @@ class MinimalProgress(cp_model.CpSolverSolutionCallback):
 
             if self.time_limit:
                 pct_val = min(100.0, 100.0 * now / self.time_limit)
-                pct_field = f"{pct_val:6.2f}%"
+                pct_field = f"{pct_val:4.1f}%"
             else:
                 pct_field = "  n/a "
             print(
-                f"[{now:5.1f}s] pct of time limit={pct_field} | best={best_field} | ratio={ratio_field} | sols={self.sols:<5.0f}",
+                f"[{now:6.1f}s] pct of time limit={pct_field} | best={best_field} | ratio={ratio_field} | sols={self.sols:<5.0f}",
                 flush=True,
             )
             self.last_time = now

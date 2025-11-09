@@ -6,10 +6,10 @@ from types import SimpleNamespace
 import pandas as pd
 
 from rostering.config import Config
-from rostering.generate.staff import Staff
 from rostering.input_data import InputData
 from rostering.reporting import data_models, metrics
 from rostering.reporting.adapters import ResultAdapter
+from rostering.staff import Staff
 
 
 class StubAdapter(ResultAdapter):

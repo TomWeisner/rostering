@@ -73,7 +73,7 @@ def show_hour_of_day_histograms(
     ax.plot(
         hours,
         [float(overall.loc[h]) for h in hours],
-        linewidth=2.5,
+        linewidth=1,
         color="black",
         label="Staff on shift",
     )
@@ -128,7 +128,9 @@ def show_solution_progress(history: Sequence[tuple[float, float, float]]) -> Non
         linewidth=1.25,
     )
     ax.set_xlabel("Solution # (in discovery order)")
-    ax.set_ylabel("Smallest objective found", color=penalty_color)
+    ax.set_ylabel(
+        f"Smallest objective found. Min={min(bound_vals):.1f}", color=penalty_color
+    )
     ax.tick_params(axis="y", colors=penalty_color)
     ax.spines["left"].set_color(penalty_color)
     ax.set_xlim(*_expand_limits(solution_idx, axis_padding=0.01))

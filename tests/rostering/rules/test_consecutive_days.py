@@ -5,9 +5,9 @@ from types import SimpleNamespace
 from ortools.sat.python import cp_model
 
 from rostering.config import Config
-from rostering.generate.staff import Staff
 from rostering.input_data import InputData
 from rostering.rules.consecutive_days import ConsecutiveDaysRule
+from rostering.staff import Staff
 
 
 def _make_ctx(n: int = 2, days: int = 3) -> SimpleNamespace:
@@ -52,11 +52,11 @@ def _make_ctx(n: int = 2, days: int = 3) -> SimpleNamespace:
     return SimpleNamespace(cfg=cfg, data=data, m=model, x=x, z=z)
 
 
-def test_consecutive_days_rule_emits_penalties_and_runlen():
+def test_consecutive_days_rule_emits_penalties_and_consec_days_worked():
     ctx = _make_ctx()
     rule = ConsecutiveDaysRule(
         ctx,
-        pref_free=1,
+        consec_days_before_penality=1,
         base=2.0,
         scaler=1.0,
         scale_int=10,
@@ -66,5 +66,5 @@ def test_consecutive_days_rule_emits_penalties_and_runlen():
 
     rule.add_hard()  # Should not raise and should honor limits internally.
     terms = rule.contribute_objective()
-    expected = ctx.cfg.N * max(0, ctx.cfg.DAYS - rule.pref_free)
+    expected = ctx.cfg.N * max(0, ctx.cfg.DAYS - rule.consec_days_before_penality)
     assert len(terms) == expected

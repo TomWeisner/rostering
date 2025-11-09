@@ -6,10 +6,10 @@ from types import SimpleNamespace
 import pandas as pd
 
 from rostering.config import Config
-from rostering.generate.staff import Staff
 from rostering.input_data import InputData
 from rostering.reporting.adapters import PandasResultAdapter
 from rostering.reporting.text_report import render_text_report
+from rostering.staff import Staff
 
 
 def make_cfg():

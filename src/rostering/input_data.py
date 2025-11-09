@@ -3,12 +3,12 @@ from typing import Optional
 
 from rostering.config import Config
 from rostering.generate.staff import (
-    Staff,
     StaffGenConfig,
     assign_time_off,
     build_allowed_matrix,
     create_staff,
 )
+from rostering.staff import Staff
 
 
 @dataclass

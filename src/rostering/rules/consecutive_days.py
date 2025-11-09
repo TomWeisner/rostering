@@ -9,11 +9,11 @@ class ConsecutiveDaysRule(Rule):
     penalties when runs exceed a threshold.
 
     Settings (RuleSpec.settings):
-      pref_free: int, number of consecutive days allowed before soft penalties kick in (default 5)
+      consec_days_before_penality: int, number of consecutive days allowed before soft penalties kick in (default 5)
       base: float >= 1.0, growth factor for penalties (default 2.0)
       scaler: float >= 0, multiplier prior to exponentiation (default 1.0)
 
-      penalty = scaler * (base ** (runlen - pref_free))
+      penalty = scaler * (base ** (consec_days_worked - consec_days_before_penality))
     """
 
     order = 75
@@ -21,7 +21,9 @@ class ConsecutiveDaysRule(Rule):
 
     def __init__(self, model, **settings):
         super().__init__(model, **settings)
-        self.pref_free = int(self.setting("pref_free", 5))
+        self.consec_days_before_penality = int(
+            self.setting("consec_days_before_penality", 5)
+        )
         self.base = float(self.setting("base", 2.0))
         self.scaler = float(self.setting("scaler", 1.0))
         self.max_gap = max(1, int(self.setting("max_gap", 4)))
@@ -41,27 +43,27 @@ class ConsecutiveDaysRule(Rule):
 
     def add_hard(self) -> None:
         C, data, m = self.model.cfg, self.model.data, self.model.m
-        runlen = getattr(self.model, "consec_days_worked", None)
-        if not runlen:
+        consec_days_worked = getattr(self.model, "consec_days_worked", None)
+        if not consec_days_worked:
             return
 
         for e in range(C.N):
             # Base case for day 0.
-            ct = m.Add(runlen[(e, 0)] == self.model.z[(e, 0)])
-            self._guard(ct, f"RUNLEN-BASE[e={e}]")
+            ct = m.Add(consec_days_worked[(e, 0)] == self.model.z[(e, 0)])
+            self._guard(ct, f"consec_days_worked-BASE[e={e}]")
 
             for d in range(1, C.DAYS):
-                prev = runlen[(e, d - 1)]
-                cur = runlen[(e, d)]
+                prev = consec_days_worked[(e, d - 1)]
+                cur = consec_days_worked[(e, d)]
 
                 ct = m.Add(cur <= prev + 1)
-                self._guard(ct, f"RUNLEN-UP[e={e},d={d}]")
+                self._guard(ct, f"consec_days_worked-UP[e={e},d={d}]")
 
                 ct = m.Add(cur <= C.DAYS * self.model.z[(e, d)])
-                self._guard(ct, f"RUNLEN-Z[e={e},d={d}]")
+                self._guard(ct, f"consec_days_worked-Z[e={e},d={d}]")
 
                 ct = m.Add(cur >= prev + 1 - C.DAYS * (1 - self.model.z[(e, d)]))
-                self._guard(ct, f"RUNLEN-DOWN[e={e},d={d}]")
+                self._guard(ct, f"consec_days_worked-DOWN[e={e},d={d}]")
 
             # Hard max consecutive-day enforcement per staff member.
             if e < len(data.staff):
@@ -81,12 +83,12 @@ class ConsecutiveDaysRule(Rule):
                 continue
 
             for d in range(C.DAYS):
-                ct = m.Add(runlen[(e, d)] <= limit_val)
+                ct = m.Add(consec_days_worked[(e, d)] <= limit_val)
                 self._guard(ct, f"MAX-CONSEC[e={e},d={d},limit={limit_val}]")
 
     def contribute_objective(self):
-        runlen = getattr(self.model, "consec_days_worked", None)
-        if not runlen or self.scaler <= 0:
+        consec_days_worked = getattr(self.model, "consec_days_worked", None)
+        if not consec_days_worked or self.scaler <= 0:
             return []
 
         C, m = self.model.cfg, self.model.m
@@ -111,21 +113,27 @@ class ConsecutiveDaysRule(Rule):
                         limit_val = int(limit)
                     except (TypeError, ValueError):
                         limit_val = None
-            if limit_val is not None and self.pref_free >= limit_val:
+            if limit_val is not None and self.consec_days_before_penality >= limit_val:
                 continue
 
             for d in range(C.DAYS):
                 remaining_days = C.DAYS - d
-                if remaining_days <= self.pref_free:
+                if remaining_days <= self.consec_days_before_penality:
                     continue
                 capped_run = m.NewIntVar(0, max_gap, f"consec_cap_e{e}_d{d}")
-                m.AddMinEquality(capped_run, [runlen[(e, d)], cap_const])
+                m.AddMinEquality(capped_run, [consec_days_worked[(e, d)], cap_const])
 
                 excess = m.NewIntVar(0, max_gap, f"consec_excess_e{e}_d{d}")
                 over = m.NewBoolVar(f"consec_over_e{e}_d{d}")
-                m.Add(capped_run >= self.pref_free + 1).OnlyEnforceIf(over)
-                m.Add(capped_run <= self.pref_free).OnlyEnforceIf(over.Not())
-                m.Add(excess == capped_run - self.pref_free).OnlyEnforceIf(over)
+                m.Add(capped_run >= self.consec_days_before_penality + 1).OnlyEnforceIf(
+                    over
+                )
+                m.Add(capped_run <= self.consec_days_before_penality).OnlyEnforceIf(
+                    over.Not()
+                )
+                m.Add(
+                    excess == capped_run - self.consec_days_before_penality
+                ).OnlyEnforceIf(over)
                 m.Add(excess == 0).OnlyEnforceIf(over.Not())
 
                 penalty = m.NewIntVar(0, max_penalty, f"consec_penalty_e{e}_d{d}")

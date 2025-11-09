@@ -1,6 +1,7 @@
 import numpy as np
 
 from rostering.rules.base import Rule
+from rostering.rules.helpers import ensure_total_hours
 
 
 def _required_hours_lower_bound(C) -> int:
@@ -21,32 +22,30 @@ def _required_hours_lower_bound(C) -> int:
 
 class FairnessRule(Rule):
     """
-    Balance total assigned hours across employees by penalising deviations from
-    the "equal share" target.
+    Penalise deviations from equal-share hours, with optional extra weight for higher bands.
 
-    This class intentionally serves as a template for other rules:
-      • It documents every tuning knob.
-      • It explains each modelling phase in comments.
-      • It demonstrates how to convert human language requirements into CP-SAT
-        linear expressions with clear intermediate variables.
+    Fairness settings (RuleSpec):
+      • base (>1.0):
+          exponential growth factor. Example: base=1.3 means the 1st, 2nd, 3rd hours
+          away from the target add 1.3¹≈1.3, 1.3²≈1.69, 1.3³≈2.20 penalty units in
+          addition to penalties from earlier hours.
+      • scale (>=0):
+          linear multiplier applied to every tier. Example: base=1.3, scale=0.4,
+          deviation=3h ⇒ 0.4*(1.3¹ + 1.3² + 1.3³) ≈ 2.24.
+      • max_deviation_hours (int):
+          clamps the AddElement lookup. Example: max_deviation_hours=6 limits the
+          cumulative term to Σ_{k=1..6} scale * baseᵏ; hour 7+ reuses the hour-6 cost.
 
-    Settings (RuleSpec):
-      base: float (>1.0)
-          Growth factor for the exponential tiers. Larger bases punish outliers
-          more aggressively because each extra hour multiplies the cost.
-      scale: float (>=0)
-          Multiplier applied before rounding weights to integers. Use it to
-          change the overall magnitude of fairness penalties relative to other
-          soft objectives.
-      max_deviation_hours: int
-          Caps how many tiers we build. Once the deviation exceeds this value,
-          additional hours do not create new penalty literals, which keeps the
-          model small.
-
-    Required config fields:
-      cfg.DAYS, cfg.HOURS, cfg.N
-      cfg.SKILL_MIN (to estimate the total demand)
-      cfg.WEEKLY_MAX_HOURS (optional per-employee bound)
+    Band shortfall settings (optional):
+      • band_shortfall_base / band_shortfall_scale / band_shortfall_max_gap:
+          shape the extra penalty curve for higher-band employees who fall short of
+          the fleet average. Encodes the idea that higher-band employees should
+          work at least as much as less paid colleagues.
+          Example: base=1.25, scale=0.5, max_gap=4 means being
+          3h short contributes 0.5*(1.25¹+1.25²+1.25³) ≈ 2.34.
+      • band_shortfall_threshold:
+          first band level that should be penalised (inclusive). Example
+          threshold=1 penalises bands ≥1; threshold=3 penalises bands ≥3.
     """
 
     order = 90
@@ -61,6 +60,7 @@ class FairnessRule(Rule):
             return []
 
         C, M = self.model.cfg, self.model.m
+        staff = list(getattr(self.model.data, "staff", []) or [])
         if C.N <= 0:
             return []
 
@@ -108,6 +108,30 @@ class FairnessRule(Rule):
             penalty_table.append(cumulative)
         max_penalty = penalty_table[-1]
 
+        get_total = ensure_total_hours(self, horizon_ub)
+        total_sum = getattr(self.model, "_total_hours_sum", None)
+        if total_sum is None:
+            total_sum = M.NewIntVar(0, horizon_ub * C.N, "total_hours_sum")
+            M.Add(total_sum == sum(get_total(e) for e in range(C.N)))
+            self.model._total_hours_sum = total_sum
+
+        # Optional 'band shortfall' extension. When enabled it layers an extra penalty
+        # on top of fairness for higher bands who fall short of the fleet average.
+        band_base = float(self.setting("band_shortfall_base", 1.25))
+        band_scale = float(self.setting("band_shortfall_scale", 0.5))
+        band_max_gap = int(self.setting("band_shortfall_max_gap", 4))
+        band_threshold = int(self.setting("band_shortfall_threshold", 1))
+        band_enabled = band_scale > 0 and band_base > 1.0 and band_max_gap > 0
+        if band_enabled:
+            band_table = [0]
+            cumulative = 0
+            for k in range(1, band_max_gap + 1):
+                cumulative += int(round(band_scale * (band_base**k)))
+                band_table.append(cumulative)
+            band_cap_const = M.NewIntVar(
+                band_max_gap, band_max_gap, "band_short_cap_const"
+            )
+
         terms = []
 
         cap_constant = M.NewIntVar(DEV_CAP, DEV_CAP, "fair_dev_cap_const")
@@ -123,15 +147,7 @@ class FairnessRule(Rule):
             #    when the employee covers 60 hours, effectively dodging fairness
             #    penalties altogether.
             # ------------------------------------------------------------------
-            T_e = M.NewIntVar(0, horizon_ub, f"T_e{e}")
-            M.Add(
-                T_e
-                == sum(
-                    self.model.x[(e, d, h)]
-                    for d in range(C.DAYS)
-                    for h in range(C.HOURS)
-                )
-            )
+            T_e = get_total(e)
 
             # ------------------------------------------------------------------
             # 5) Linearise |T_e - target| by bounding it between floor/ceil.
@@ -162,5 +178,23 @@ class FairnessRule(Rule):
             penalty = M.NewIntVar(0, max_penalty, f"fair_penalty_e{e}")
             M.AddElement(capped_dev, penalty_table, penalty)
             terms.append(penalty)
+
+            if band_enabled:
+                # Translate band level into a multiplier exponent. Only bands above
+                # the threshold receive the extra penalty.
+                band_level = (
+                    getattr(staff[e], "band", 1) if e < len(staff) else 1
+                ) or 1
+                if band_level >= band_threshold:
+                    # shortfall captures how far this employee is below the fleet average.
+                    shortfall = M.NewIntVar(0, horizon_ub, f"band_shortfall_e{e}")
+                    gap_expr = total_sum - C.N * T_e
+                    M.Add(C.N * shortfall >= gap_expr)
+                    # Clamp the shortfall to the configured max gap.
+                    capped_shortfall = M.NewIntVar(0, band_max_gap, f"band_cap_e{e}")
+                    M.AddMinEquality(capped_shortfall, [shortfall, band_cap_const])
+                    band_penalty = M.NewIntVar(0, band_table[-1], f"band_penalty_e{e}")
+                    M.AddElement(capped_shortfall, band_table, band_penalty)
+                    terms.append(band_penalty)
 
         return terms

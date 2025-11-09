@@ -78,7 +78,12 @@ class ShiftIntervalRule(Rule):
             }
 
             for d in range(C.DAYS):
+                day_blocked = d in forbidden_days
                 for h in range(C.HOURS):
+                    if day_blocked or not allowed_mask[h]:
+                        # Hour is impossible (holiday or blocked), so force x = 0 and continue.
+                        m.Add(self.model.x[(e, d, h)] == 0)
+                        continue
                     # ---------- Current-day coverage: w_cur = y AND (S <= h) AND (h < S+L) ----------
                     # b1 ↔ (S[e,d] ≤ h)
                     b1 = m.NewBoolVar(f"b1_e{e}_d{d}_h{h}")

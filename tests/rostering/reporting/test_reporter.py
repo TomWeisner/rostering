@@ -6,9 +6,9 @@ from types import SimpleNamespace
 import pytest
 
 from rostering.config import Config
-from rostering.generate.staff import Staff
 from rostering.input_data import InputData
 from rostering.reporting.reporter import Reporter
+from rostering.staff import Staff
 
 
 class DummyModel:

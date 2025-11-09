@@ -7,13 +7,13 @@ import pandas as pd
 
 matplotlib.use("Agg", force=True)
 from rostering.config import Config
-from rostering.generate.staff import Staff
 from rostering.input_data import InputData
 from rostering.reporting.adapters import ResultAdapter
 from rostering.reporting.plots import (
     show_hour_of_day_histograms,
     show_solution_progress,
 )
+from rostering.staff import Staff
 
 
 class TinyAdapter(ResultAdapter):

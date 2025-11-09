@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Optional, Sequence, Tuple
+from typing import Any, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,7 @@ from rostering.config import Config
 
 # If you store a large list of first names in another module:
 from rostering.generate.staff_names import FIRST_NAMES
+from rostering.staff import Staff
 
 DEFAULT_STAFF_JSON = Path(__file__).resolve().parents[2] / "example_staff.json"
 
@@ -91,53 +92,6 @@ class StaffGenConfig:
 
 
 # ----------------------------
-# Data model
-# ----------------------------
-@dataclass(slots=True)
-class Staff:
-    """
-    A staff member.
-    """
-
-    id: int
-    name: str
-    band: int
-    skills: list[str]
-    is_night_worker: bool
-    max_consec_days: Optional[int]
-    holidays: set[date] = field(default_factory=set)
-    preferred_off: set[date] = field(default_factory=set)
-
-    def __repr__(self) -> str:
-        cap = (
-            f"cap={self.max_consec_days}"
-            if self.max_consec_days is not None
-            else "cap=∞"
-        )
-        return (
-            f"Staff(id={self.id}, name='{self.name}', band={self.band}, "
-            f"skills={self.skills}, night={self.is_night_worker}, {cap}, "
-            f"hol={[d.isoformat() for d in sorted(self.holidays)]}, "
-            f"pref={[d.isoformat() for d in sorted(self.preferred_off)]})"
-        )
-
-    def __post_init__(self) -> None:
-        self.holidays = _normalize_date_set(self.holidays)
-        self.preferred_off = _normalize_date_set(self.preferred_off)
-        # Ensure "ANY" is present exactly once.
-        if "ANY" not in self.skills:
-            self.skills.append("ANY")
-        # De-duplicate while preserving order (small lists, so simple approach is fine)
-        seen = set()
-        dedup = []
-        for s in self.skills:
-            if s not in seen:
-                seen.add(s)
-                dedup.append(s)
-        self.skills = dedup
-
-
-# ----------------------------
 # Generation helpers
 # ----------------------------
 def _rng(seed: Optional[int]) -> np.random.Generator:
@@ -156,20 +110,6 @@ def _deterministic_counts(n: int, probs: np.ndarray) -> np.ndarray:
         bump_idx = np.argsort(remainders)[::-1][:shortfall]
         floors[bump_idx] += 1
     return floors
-
-
-def _normalize_date_set(values: Iterable[Any]) -> set[date]:
-    out: set[date] = set()
-    for val in values:
-        if isinstance(val, date) and not isinstance(val, datetime):
-            out.add(val)
-        elif isinstance(val, datetime):
-            out.add(val.date())
-        else:
-            raise TypeError(
-                "Holidays/preferred_off entries must be datetime.date or datetime.datetime."
-            )
-    return out
 
 
 # ----------------------------
