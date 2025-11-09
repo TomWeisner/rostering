@@ -78,7 +78,7 @@ def sample_employee_hourly_gantt_plot(
     if num_staff == 0:
         return
 
-    rng = random.Random(cfg.SEED if cfg.SEED is not None else 999)
+    rng = random.Random(cfg.SEED if cfg.SEED is not None else 555)
     available_indices = list(range(min(hourly.shape[1], len(staff))))
     rng.shuffle(available_indices)
     chosen_indices = sorted(available_indices[:num_staff])
